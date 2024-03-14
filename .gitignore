@@ -1,0 +1,10 @@
+/bin
+/build
+/data/tmp
+
+/.vscode
+
+/polybench-c-3.2
+/include/cpp-nn/Eigen
+
+/src/cpp-nn/cpp_nn.cpp
