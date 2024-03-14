@@ -8,3 +8,4 @@
 /include/cpp-nn/Eigen
 
 /src/cpp-nn/cpp_nn.cpp
+/src/driver.cpp
