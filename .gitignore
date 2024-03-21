@@ -3,6 +3,7 @@
 /data/tmp
 
 /.vscode
+.DS_Store
 
 /polybench-c-3.2
 /include/cpp-nn/Eigen
