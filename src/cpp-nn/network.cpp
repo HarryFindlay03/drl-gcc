@@ -112,6 +112,22 @@ Eigen::MatrixXd Layer::forward_propogate_rl()
 }
 
 
+void Layer::set_weight(const Eigen::MatrixXd& new_weight)
+{
+    if(!((W.rows() == new_weight.rows()) && (W.cols() == new_weight.cols())))
+    {
+        std::cout << "DIMENSION OF MATRIX TO COPY INCORRECT! (" << W.rows() << "x" << W.cols() << ") required, exiting!";
+        std::exit(-1);
+    }
+
+    int i;
+    for(i = 0; i < W.size(); i++)
+        *(W.data() + i) = *(new_weight.data() + i);
+
+    return;
+}
+
+
 /******************************/
 /* ML_ANN CLASS IMPLEMENTATION */
 /******************************/

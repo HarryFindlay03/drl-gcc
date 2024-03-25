@@ -22,6 +22,12 @@ public:
     void back_propogate_rl(const Eigen::MatrixXd& output, const std::vector<double>& targets);
 
     void update_weights_rl(const double eta);
+
+    void set_weight_matrix(const Eigen::MatrixXd& new_weight, const size_t layer_pos) { layers[layer_pos]->set_weight(new_weight); };
+
+    inline size_t get_num_layers() { return num_layers; };
+
+    inline const std::vector<Layer*>& get_layers() { return layers; };
 };
 
 #endif

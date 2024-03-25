@@ -1,7 +1,14 @@
+# system build files during compilation
 bin/
 build/
 
+# personal test dev file
+src/driver.cpp
+
+# include
 include/cpp-nn/Eigen/
 
+
+# misc
 .DS_Store
 /.vscode

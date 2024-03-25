@@ -28,6 +28,8 @@ public:
 
 
     Eigen::MatrixXd forward_propogate_rl();
+
+    void set_weight(const Eigen::MatrixXd& new_weight);
 };
 
 #endif
