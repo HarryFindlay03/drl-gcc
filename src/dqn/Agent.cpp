@@ -1,4 +1,18 @@
+/***
+ * AUTHOR: Harry Findlay
+ * LICENSE: Shipped with package - GNU GPL v3.0
+ * FILE START: 25/04/2024
+ * FILE LAST UPDATED: 25/04/2024
+ * 
+ * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
+ * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
+ * 
+ * DESCRIPTION: An implementation of a deep Q-learning agent following DeepMind's paper.
+*/
+
+
 #include "dqn/Agent.h"
+
 
 Agent::Agent
 (

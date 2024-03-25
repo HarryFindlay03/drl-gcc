@@ -1,3 +1,15 @@
+/***
+ * AUTHOR: Harry Findlay
+ * LICENSE: Shipped with package - GNU GPL v3
+ * FILE START: 04/02/2024
+ * FILE LAST UPDATED: 25/04/2024
+ * 
+ * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
+ * REFERENCES: (Heavy) Inspiration taken from Brian Dolhansky's similar implementation in Python, go check it out!, src: https://github.com/bdol/bdol-ml
+ * 
+ * DESCRIPTION: Layer definition for neural network implementation.
+*/
+
 #ifndef LAYER_H
 #define LAYER_H
 
