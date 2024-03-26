@@ -10,8 +10,9 @@
  * DESCRIPTION: Class definition for deep Q-learning agent following DeepMind's paper.
 */
 
-
+#include <string>
 #include <vector>
+#include <random>
 
 #include "cpp-nn/network.h"
 #include "BufferItem.h"
@@ -26,11 +27,21 @@ class Agent
     /* REPLAY BUFFER */
     std::vector<BufferItem*> buff;
 
+    /* STARTING ACTION SPACE */
+    std::vector<std::string> actions;
+
+    /* UNOPTIMISED STRING - acts as environment */
+    std::string unop_string;
+
     /* PARAMS */
     unsigned int buffer_size;
     unsigned int copy_period;
     unsigned int number_of_episodes;
     unsigned int episode_length;
+
+    /* PRIVATE VALUES */
+    double init_runtime;
+    std::string program_name;
 
     // state extraction function
     // loss function - passed to cpp-nn!
@@ -39,7 +50,10 @@ class Agent
 public:
     Agent
     (
-        const std::vector<size_t>& network_config, 
+        const std::vector<size_t>& network_config,
+        const std::vector<std::string>& actions,
+        const std::string unop_string,
+        const std::string program_name,
         const unsigned int buffer_size, 
         const unsigned int copy_period,
         const unsigned int number_of_episodes,
@@ -56,5 +70,9 @@ public:
         delete Q_hat;
     };
 
+    void train(const double epsilon);
+
     void copy_network_weights();
+
+    double get_reward(const double new_runtime);
 };
