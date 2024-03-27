@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3
  * FILE START: 04/02/2024
- * FILE LAST UPDATED: 25/04/2024
+ * FILE LAST UPDATED: 27/04/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: (Heavy) Inspiration taken from Brian Dolhansky's similar implementation in Python, go check it out!, src: https://github.com/bdol/bdol-ml
@@ -133,7 +133,8 @@ void Layer::set_weight(const Eigen::MatrixXd& new_weight)
 /******************************/
 
 
-ML_ANN::ML_ANN(const std::vector<size_t>& layer_config)
+ML_ANN::ML_ANN(const std::vector<size_t>& layer_config, std::function<Eigen::MatrixXd(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target)> loss_func)
+: loss_func(loss_func)
 {
     num_layers = layer_config.size();
     layers.resize(num_layers);
@@ -242,6 +243,24 @@ void ML_ANN::back_propogate_rl(const Eigen::MatrixXd& output, const std::vector<
     layers[num_layers-1]->G = net_output;
 
     // BP through remaining layers excluding input
+    for(i = (num_layers-2); i > 0; i--)
+        layers[i]->G = ML_ANN::elem_wise_product(layers[i]->Fp, (layers[i]->W * layers[i+1]->G));
+
+    return;
+}
+
+void ML_ANN::back_propogate_rl(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target)
+{
+    if(!(output.rows() == target.rows()))
+    {
+        std::cout << "ERROR: output and targets not the same dimension, skipping BP step!" << std::endl;
+        return;
+    }
+
+    layers[num_layers-1]->G = loss_func(output, target);
+
+    // BP through remaining layers excluding input
+    int i;
     for(i = (num_layers-2); i > 0; i--)
         layers[i]->G = ML_ANN::elem_wise_product(layers[i]->Fp, (layers[i]->W * layers[i+1]->G));
 

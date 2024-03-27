@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 25/04/2024
- * FILE LAST UPDATED: 25/04/2024
+ * FILE LAST UPDATED: 27/04/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -12,10 +12,28 @@
 
 #include <string>
 #include <vector>
+#include <cmath>
 #include <random>
 
 #include "cpp-nn/network.h"
+#include "envtools/utils.h"
+#include "envtools/RandHelper.h"
 #include "BufferItem.h"
+
+
+/* HELPER FUNCTIONS */
+
+/**
+ * @brief squared loss function defined to be passed to ML_ANN
+ * 
+ * @param output 
+ * @param target 
+ * @return Eigen::MatrixXd 
+ */
+Eigen::MatrixXd l2_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target);
+
+
+/* AGENT CLASS DEFINITION */
 
 
 class Agent
@@ -30,6 +48,9 @@ class Agent
     /* STARTING ACTION SPACE */
     std::vector<std::string> actions;
 
+    /* CURRENT OPTIMISATIONS APPLIED */
+    std::vector<std::string> applied_optimisations;
+
     /* UNOPTIMISED STRING - acts as environment */
     std::string unop_string;
 
@@ -38,13 +59,24 @@ class Agent
     unsigned int copy_period;
     unsigned int number_of_episodes;
     unsigned int episode_length;
+    double discount_rate;
+    double eta;
 
     /* PRIVATE VALUES */
     double init_runtime;
     std::string program_name;
+    unsigned int curr_buff_pos;
+    RandHelper* rnd;
 
     // state extraction function
     // loss function - passed to cpp-nn!
+
+    /**
+     * @brief finds and returns the best q value for q_hat
+     * 
+     * @return double 
+     */
+    inline double best_q_hat_value(const std::vector<double>& new_env_st);
 
 
 public:
@@ -57,7 +89,9 @@ public:
         const unsigned int buffer_size, 
         const unsigned int copy_period,
         const unsigned int number_of_episodes,
-        const unsigned int episode_length
+        const unsigned int episode_length,
+        const double discount_rate,
+        const double eta
     );
 
     ~Agent()
@@ -70,9 +104,16 @@ public:
         delete Q_hat;
     };
 
-    void train(const double epsilon);
+    void train_optimiser(const double epsilon);
 
     void copy_network_weights();
 
     double get_reward(const double new_runtime);
+
+
+    /* STATIC HELPER FUNCTIONS */
+
+    template <typename T>
+    static T epsilon_greedy_action(const ML_ANN* Q, std::vector<T>& actions, const std::vector<double>& st, const double epsilon);
+
 };
