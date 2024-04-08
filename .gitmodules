@@ -1,0 +1,3 @@
+[submodule "stateplugin"]
+	path = stateplugin
+	url = https://github.com/HarryFindlay03/stateplugin.git
