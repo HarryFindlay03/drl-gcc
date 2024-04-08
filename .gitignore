@@ -8,6 +8,8 @@ src/driver.cpp
 # include
 include/cpp-nn/Eigen/
 
+# build libraries
+statetool.dylib
 
 # misc
 .DS_Store

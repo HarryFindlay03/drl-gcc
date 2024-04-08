@@ -1,4 +1,4 @@
-CC = g++-13
+CC = g++
 CC_FLAGS = -I include/
 
 default: driver
@@ -9,5 +9,8 @@ network.o:
 Agent.o:
 	$(CC) $(CC_FLAGS) -c src/dqn/Agent.cpp -o build/$@
 
-driver: src/driver.cpp network.o Agent.o
-	$(CC) $(CC_FLAGS) src/driver.cpp  build/network.o build/Agent.o -o bin/$@
+utils.o:
+	$(CC) $(CC_FLAGS) -c src/envtools/utils.cpp -o build/$@
+
+driver: src/driver.cpp network.o Agent.o utils.o
+	$(CC) $(CC_FLAGS) src/driver.cpp  build/network.o build/Agent.o build/utils.o -o bin/$@

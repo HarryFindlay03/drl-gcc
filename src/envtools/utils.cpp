@@ -125,6 +125,12 @@ double run_given_string(const std::string& compile_string, const std::string& pr
 }
 
 
+std::vector<double> get_program_state(const std::string& compile_string)
+{
+
+}
+
+
 std::string opt_vec_to_string(const std::vector<std::string>& opts)
 {
     std::string res;

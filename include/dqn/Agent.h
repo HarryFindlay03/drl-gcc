@@ -102,6 +102,7 @@ public:
 
         delete Q;
         delete Q_hat;
+        delete rnd;
     };
 
     void train_optimiser(const double epsilon);
@@ -110,10 +111,13 @@ public:
 
     double get_reward(const double new_runtime);
 
+    /* help for debug */
+    void print_networks();
+
 
     /* STATIC HELPER FUNCTIONS */
 
     template <typename T>
-    static T epsilon_greedy_action(const ML_ANN* Q, std::vector<T>& actions, const std::vector<double>& st, const double epsilon);
+    static T epsilon_greedy_action(ML_ANN* Q, std::vector<T>& actions, const std::vector<double>& st, RandHelper* rnd, double epsilon);
 
 };

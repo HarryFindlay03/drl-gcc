@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 25/04/2024
- * FILE LAST UPDATED: 27/04/2024
+ * FILE LAST UPDATED: 08/05/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -10,8 +10,12 @@
  * DESCRIPTION: An implementation of a deep Q-learning agent following DeepMind's paper.
 */
 
+/* TODO */
+    // implement global static random number generation
+
 
 #include "dqn/Agent.h"
+
 
 /* HELPER FUNCTIONS */
 
@@ -96,8 +100,8 @@ void Agent::train_optimiser(const double epsilon)
             std::vector<double> curr_st;
             std::vector<double> next_st;
 
-            curr_st = get_program_state_profile((unop_string + opt_vec_to_string(applied_optimisations)));
-            action = Agent::epsilon_greedy_action<std::string>(Q, actions, curr_st, epsilon);
+            curr_st = get_program_state((unop_string + opt_vec_to_string(applied_optimisations)));
+            action = Agent::epsilon_greedy_action<std::string>(Q, actions, curr_st, rnd, epsilon);
 
             /* execute action a_t in emulator and and observe reward r_t and image x_(t+1)*/
             // running in emulator - returning the immediate reward here but what is that ?
@@ -109,7 +113,7 @@ void Agent::train_optimiser(const double epsilon)
             double reward;
 
             /* set s_(t+1) and preprocess - preprocessing is anagalous to getting the state vector for input into NN */
-            next_st = get_program_state_profile((unop_string + opt_vec_to_string(applied_optimisations) + action));
+            next_st = get_program_state((unop_string + opt_vec_to_string(applied_optimisations) + action));
 
             /* store the transistion in the replay buffer D (preprocessed s_t, a_t, r_t, preprocessed s_(t+1)) */
             // BufferItem* trans = new BufferItem(curr_st, action, reward, next_st);
@@ -187,15 +191,34 @@ double Agent::best_q_hat_value(const std::vector<double>& new_env_st)
 }
 
 
+void Agent::print_networks()
+{
+    std::cout << "Q network:\n";
+
+    for(auto l : Q->get_layers())
+        std::cout << l->W << "\n\n";
+    std::cout << std::endl;
+
+    std::cout << "Q_hat network:\n";
+
+    for(auto l : Q_hat->get_layers())
+        std::cout << l->W << "\n\n";
+    std::cout << std::endl;
+
+    return;
+}
+
+
 /* STATIC HELPER FUNCTIONS */
 
 
 template <typename T>
-T Agent::epsilon_greedy_action(const ML_ANN* Q, std::vector<T>& actions, const std::vector<double>& st, const double epsilon)
+T Agent::epsilon_greedy_action(ML_ANN* Q, std::vector<T>& actions, const std::vector<double>& st, RandHelper* rnd, double epsilon)
 {
     T action_res;
 
-    double r = ((double)rand() % (double)RAND_MAX);
+    // double r = ((double)rand() % (double)RAND_MAX);
+    double r = rnd->random_double_range(0.0, 1.0);
 
     if(r > epsilon)
     {

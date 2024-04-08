@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3
  * FILE START: 04/02/2024
- * FILE LAST UPDATED: 27/04/2024
+ * FILE LAST UPDATED: 08/05/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: (Heavy) Inspiration taken from Brian Dolhansky's similar implementation in Python, go check it out!, src: https://github.com/bdol/bdol-ml
@@ -13,12 +13,6 @@
 
 #ifndef ML_ANN_H
 #define ML_ANN_H
-
-/* DEFAULT LOSS FUNCTION */
-Eigen::MatrixXd default_loss_function(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target) 
-{
-    return output - target;
-};
 
 
 class ML_ANN
@@ -36,7 +30,7 @@ public:
     ML_ANN
     (
         const std::vector<size_t>& layer_config, 
-        std::function<Eigen::MatrixXd(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target)> loss_func = default_loss_function
+        std::function<Eigen::MatrixXd(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target)> loss_func
     );
 
     ~ML_ANN();
