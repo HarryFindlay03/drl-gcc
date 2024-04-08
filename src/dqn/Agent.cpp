@@ -104,6 +104,8 @@ void Agent::train_optimiser(const double epsilon)
             std::string new_compile_string = unop_string + action;
 
             // the reward is the value returned from the network with parameters theta?
+
+            // xiaoyang - intermediate reward is zero (unless at episode end)
             double reward;
 
             /* set s_(t+1) and preprocess - preprocessing is anagalous to getting the state vector for input into NN */
