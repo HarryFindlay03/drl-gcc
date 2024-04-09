@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 25/04/2024
- * FILE LAST UPDATED: 25/04/2024
+ * FILE LAST UPDATED: 09/05/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
 
@@ -17,8 +17,9 @@ class BufferItem
     std::vector<double> curr_st;
     std::vector<double> next_st;
     std::vector<std::string> actions_avail;
-    std::string action; 
     double reward;
+    bool terminate;
+    int action_pos; 
 
     inline void copy_state(std::vector<double>& to, const std::vector<double>& from)
     {
@@ -32,8 +33,8 @@ class BufferItem
     };
 
 public:
-    BufferItem(const std::vector<double>& curr_st, const std::string action, const double reward, const std::vector<double>& next_st)
-    :   reward(reward), action(action)
+    BufferItem(const std::vector<double>& curr_st, const int action_pos, const double reward, const std::vector<double>& next_st, bool terminate)
+    :   reward(reward), action_pos(action_pos), terminate(terminate)
     {
         copy_state(this->curr_st, curr_st);
         copy_state(this->next_st, next_st);
@@ -47,7 +48,9 @@ public:
 
     inline const std::vector<std::string>& get_actions_avail() { return actions_avail; };
 
-    inline const std::string& get_action() { return action; };
+    inline int get_action_pos() { return action_pos; };
 
     inline double get_reward() { return reward; };
+
+    inline bool get_terminate() { return terminate; };
 };

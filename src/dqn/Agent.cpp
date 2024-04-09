@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 25/04/2024
- * FILE LAST UPDATED: 08/05/2024
+ * FILE LAST UPDATED: 09/05/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -73,7 +73,10 @@ Agent::Agent
     actions.resize(action_space.size());
     int pos = 0;
     for(auto it = actions.begin(); it != actions.end(); ++it)
-        *it = action_space[pos++];     
+        *it = action_space[pos++];
+
+    // set opts_applied
+    opts_remaining.resize(action_space.size());     
 
     // get no optimisations applied runtime
     init_runtime = run_given_string((unop_string + "-O0"), program_name);
@@ -88,66 +91,133 @@ Agent::Agent
 void Agent::train_optimiser(const double epsilon)
 {
     int i, j, curr_itr;
- 
-    for(i = 0, curr_itr = 0; i < number_of_episodes; i++)
-    {
+    bool terminate;
 
+    int num_features = get_num_features();
+    
+    curr_itr = 0;
+
+    for(i = 0; i < number_of_episodes; i++)
+    {
         for(j = 0; j < episode_length; j++)
         {
-            std::string action;
-            
-            // states
-            std::vector<double> curr_st;
-            std::vector<double> next_st;
+            /* sampling */
+            terminate = (((j+1) == episode_length) ? true : false);
+            sampling(epsilon, terminate);
 
-            curr_st = get_program_state((unop_string + opt_vec_to_string(applied_optimisations)));
-            action = Agent::epsilon_greedy_action<std::string>(Q, actions, curr_st, rnd, epsilon);
+            /* sample from replay buffer and train */
+            train_phase();
 
-            /* execute action a_t in emulator and and observe reward r_t and image x_(t+1)*/
-            // running in emulator - returning the immediate reward here but what is that ?
-            std::string new_compile_string = unop_string + action;
-
-            // the reward is the value returned from the network with parameters theta?
-
-            // xiaoyang - intermediate reward is zero (unless at episode end)
-            double reward;
-
-            /* set s_(t+1) and preprocess - preprocessing is anagalous to getting the state vector for input into NN */
-            next_st = get_program_state((unop_string + opt_vec_to_string(applied_optimisations) + action));
-
-            /* store the transistion in the replay buffer D (preprocessed s_t, a_t, r_t, preprocessed s_(t+1)) */
-            // BufferItem* trans = new BufferItem(curr_st, action, reward, next_st);
-            buff[(curr_buff_pos++) % buffer_size] = new BufferItem(curr_st, action, reward, next_st);
-
-
-            /* sample a transition from D */
-            BufferItem* sample = buff[rnd->random_int_range(0, buff.size())];
-
-            double sample_reward = sample->get_reward();
-            if((j+1) != (episode_length-1))
-            {
-                sample_reward += (discount_rate * best_q_hat_value(sample->get_next_st()));
-            }
-
-            auto sample_actions_avail = sample->get_actions_avail();
-            int action_pos = (std::find(sample_actions_avail.begin(), sample_actions_avail.end(), sample->get_action())) - sample_actions_avail.begin();
-
-            if((action_pos == sample_actions_avail.size()) && (sample_actions_avail[sample_actions_avail.size()-1] != sample->get_action()))
-            {
-                std::cout << "ERROR: Action in state not in states available actions, exiting function." << std::endl;
-                return;
-            }
-
-            Eigen::MatrixXd output_vec = Q->forward_propogate_rl(sample->get_curr_st());
-            output_vec(action_pos, 0) += sample_reward;
-
-            Q->back_propogate_rl(output_vec, Q->forward_propogate_rl(sample->get_curr_st()));
-            Q->update_weights_rl(eta);
-
-            if(curr_itr % copy_period == 0)
+            /* copy network weights */
+            if((curr_itr++) % copy_period)
                 copy_network_weights();
         }
     }
+}
+
+
+void Agent::sampling(const double epsilon, bool terminate)
+{
+    std::vector<double> curr_st = get_program_state(unop_string, opt_vec_to_string(applied_optimisations), get_num_features());
+    int action_pos = epsilon_greedy_action(curr_st, epsilon);
+
+    // execute in emulator and observe reward
+    std::string new_opts = opt_vec_to_string(applied_optimisations) + " " + get_actions()[action_pos];
+    std::vector<double> next_st = get_program_state(unop_string, new_opts, get_num_features());
+
+    // intermediate reward is zero if not episode termination
+    double reward = 0;
+    if(terminate)
+        reward = get_reward(run_given_string(unop_string + new_opts, program_name));
+
+    // save to replay buffer
+    buff[(curr_buff_pos++) % buffer_size] = new BufferItem(curr_st, action_pos, reward, next_st, terminate);
+
+    return;
+}
+
+
+void Agent::train_phase()
+{
+    // random selection from replay buffer to train
+    int max_size = (buff[(curr_buff_pos+1) % buffer_size] == NULL) ? curr_buff_pos : buffer_size;
+    BufferItem* b = buff[rnd->random_int_range(0, max_size)];
+
+    double y_j;
+
+    if(b->get_terminate())
+    {
+        y_j = b->get_reward();
+    }
+    else
+    {
+        // find the best action value with Q_hat
+        // forward prop the preprocessed state
+        Eigen::MatrixXd out = Q_hat->forward_propogate_rl(b->get_next_st());
+
+        int i;
+        double best_pos = 0;
+
+        for(i = 1; i < out.rows(); i++)
+            if(out.row(i)[0] > out.row(best_pos)[0])
+                best_pos = i;
+
+        y_j = b->get_reward() + (discount_rate * out.row(best_pos)[0]);
+    }
+
+    // gradient descent step only on output node j for action j.
+    Eigen::MatrixXd out_Q = Q->forward_propogate_rl(b->get_curr_st());
+
+    // need the action pos of j - this is where we set yj
+    Eigen::MatrixXd out_yj = out_Q;
+    out_yj(b->get_action_pos(), 0) = y_j;
+
+    Q->back_propogate_rl(out_yj, out_Q);
+    Q->update_weights_rl(eta);
+
+    return;    
+}
+
+
+/* HELPER FUNCTIONS */
+
+
+int Agent::epsilon_greedy_action(const std::vector<double>& st, const double epsilon)
+{
+    std::string action_res;
+
+    double r = rnd->random_double_range(0.0, 1.0);
+
+    if(r > epsilon)
+    {
+        int pos = rnd->choose_random_action(opts_remaining);
+        opts_remaining[pos] = -1;
+
+        return pos;
+    }
+
+    Eigen::MatrixXd q_vals = Q->forward_propogate_rl(st);
+
+    // find the first available action
+    int best_pos = 0;
+    int i;
+    for(i = 0; i < actions.size(); i++)
+    {
+        if(opts_remaining[i] != -1)
+        {
+            best_pos = i;
+            break;
+        }
+    }
+
+    // find the best available action
+    for(i = best_pos; i < actions.size(); i++)
+        if((q_vals(i, 0) > q_vals(best_pos, 0)) && (opts_remaining[i] != -1))
+            best_pos = i;
+
+    opts_remaining[best_pos] = -1;
+
+    return best_pos;
 }
 
 
@@ -207,45 +277,3 @@ void Agent::print_networks()
 
     return;
 }
-
-
-/* STATIC HELPER FUNCTIONS */
-
-
-template <typename T>
-T Agent::epsilon_greedy_action(ML_ANN* Q, std::vector<T>& actions, const std::vector<double>& st, RandHelper* rnd, double epsilon)
-{
-    T action_res;
-
-    // double r = ((double)rand() % (double)RAND_MAX);
-    double r = rnd->random_double_range(0.0, 1.0);
-
-    if(r > epsilon)
-    {
-        int pos = rand() % actions.size();
-        action_res = actions[pos];
-
-        // removing action from action space
-        actions.erase(actions.begin() + pos);
-
-        return action_res;
-    }
-
-    Eigen::MatrixXd q_vals = Q->forward_propogate_rl(st);
-
-    int best_pos = 0;
-    int pos = 0;
-    for (const auto &r : q_vals.rowwise())
-    {
-        if (r[0] > q_vals.row(best_pos)[0])
-            best_pos = pos;
-        pos++;
-    }
-
-    action_res = actions[best_pos];
-    actions.erase(actions.begin() + best_pos);
-
-    return action_res;
-}
-
-

@@ -1,3 +1,16 @@
+/***
+ * AUTHOR: Harry Findlay
+ * LICENSE: Shipped with package - GNU GPL v3.0
+ * FILE START: 14/04/2024
+ * FILE LAST UPDATED: 09/05/2024
+ * 
+ * REQUIREMENTS: PolyBench
+ * REFERENCES:
+ * 
+ * DESCRIPTION: Implementation file for utilities for drl agent.
+*/
+
+
 #include "envtools/utils.h"
 
 
@@ -125,9 +138,48 @@ double run_given_string(const std::string& compile_string, const std::string& pr
 }
 
 
-std::vector<double> get_program_state(const std::string& compile_string)
+std::vector<double> get_program_state(const std::string& unop_string, const std::string& optimisations, int num_features)
 {
+    /* use stateplugin to gather program state from filename passed as plugin argument */
 
+    /* ensure stateplugin has been built prior to running this function */
+
+    // creating temp folder
+    std::system("mkdir -p data/tmp");
+
+    // todo remove -O0 flag
+    std::string filename = DEFAULT_PLUGIN_OUTPUT_LOCATION;
+    std::string plugin_string = "-fplugin=statetool/statetool.dylib -fplugin-arg-statetool.dylib-filename=" + filename;
+    std::string exec_string = unop_string + plugin_string + optimisations;
+
+    // read state vector
+    std::system(exec_string.c_str());
+    std::vector<double> prog_state = read_state_vector(filename, num_features);
+
+    // remove tmp data
+    std::system(((std::string)"rm" + DEFAULT_PLUGIN_OUTPUT_LOCATION).c_str());
+
+    return prog_state;
+}
+
+
+std::vector<double> read_state_vector(const std::string& filename, int num_features)
+{
+    std::vector<double> res(num_features);
+    std::ifstream state_file(filename.c_str());
+
+    if(state_file.is_open())
+    {
+        int pos = 0;
+        std::string line;
+        while(getline(state_file, line))
+            res[pos++] = std::stod(line);     
+    }
+    else
+        return {-1};
+
+    state_file.close();
+    return res;
 }
 
 

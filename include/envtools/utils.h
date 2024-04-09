@@ -1,3 +1,16 @@
+/***
+ * AUTHOR: Harry Findlay
+ * LICENSE: Shipped with package - GNU GPL v3.0
+ * FILE START: 14/04/2024
+ * FILE LAST UPDATED: 09/05/2024
+ * 
+ * REQUIREMENTS: PolyBench
+ * REFERENCES:
+ * 
+ * DESCRIPTION: Header file for utilities for drl agent.
+*/
+
+
 #ifndef UTILS_H
 #define UTILS_H
 
@@ -6,6 +19,7 @@
 
 #define DEFAULT_EXEC_OUTPUT_LOCATION "bin/tmp/"
 #define DEFAULT_DATA_OUTPUT_LOCATION "data/tmp/tmpXX"
+#define DEFAULT_PLUGIN_OUTPUT_LOCATION "data/tmp/statetmpXX"
 
 #include <iostream>
 #include <string>
@@ -23,7 +37,9 @@ double run_given_string(const std::string& compile_string, const std::string& pr
 
 std::vector<double> get_program_state_profile(const std::string& compile_string);
 
-std::vector<double> get_program_state(const std::string& compile_string);
+std::vector<double> get_program_state(const std::string& unop_string, const std::string& optimisations, int num_features);
+
+std::vector<double> read_state_vector(const std::string& filename, int num_features);
 
 std::string opt_vec_to_string(const std::vector<std::string>& opts);
 

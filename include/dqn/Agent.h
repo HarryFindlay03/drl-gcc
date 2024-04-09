@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 25/04/2024
- * FILE LAST UPDATED: 27/04/2024
+ * FILE LAST UPDATED: 09/05/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -50,6 +50,9 @@ class Agent
 
     /* CURRENT OPTIMISATIONS APPLIED */
     std::vector<std::string> applied_optimisations;
+
+    /* CURRENT OPTIMISATIONS APPLIED (INT FORM) */
+    std::vector<int> opts_remaining;
 
     /* UNOPTIMISED STRING - acts as environment */
     std::string unop_string;
@@ -105,19 +108,27 @@ public:
         delete rnd;
     };
 
+    /* TRAINING FUNCTIONS */
+
     void train_optimiser(const double epsilon);
+
+    void sampling(const double epsilon, bool terminate);
+
+    void train_phase();
+
+    /* HELPER FUNCTIONS*/
+
+    int epsilon_greedy_action(const std::vector<double>& st, const double epsilon);
 
     void copy_network_weights();
 
+    inline const std::vector<std::string>& get_actions() { return actions; };
+
     double get_reward(const double new_runtime);
 
-    /* help for debug */
+    int get_num_features() { return Q->get_layers()[0]->W.rows(); };
+
+    /* DEBUG HELPER FUNCTIONS */
+
     void print_networks();
-
-
-    /* STATIC HELPER FUNCTIONS */
-
-    template <typename T>
-    static T epsilon_greedy_action(ML_ANN* Q, std::vector<T>& actions, const std::vector<double>& st, RandHelper* rnd, double epsilon);
-
 };
