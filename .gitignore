@@ -11,6 +11,9 @@ include/cpp-nn/Eigen/
 # build libraries
 statetool.dylib
 
+# polybench library
+/polybench-c-3.2
+
 # misc
 .DS_Store
 /.vscode

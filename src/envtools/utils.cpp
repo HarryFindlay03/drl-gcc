@@ -82,7 +82,7 @@ std::string format_benchmark_string(const std::string& benchmark_to_fmt, const s
     }
 
     /* forming the benchmark string */
-    std::string benchmark_string("gcc-13 -I polybench-c-3.2/utilities");
+    std::string benchmark_string(POLY_COMPILER + (std::string)" -I polybench-c-3.2/utilities");
 
     for(j = n; j >= 0; j--)
         if(benchmarks[i][j] == '/')
@@ -147,17 +147,18 @@ std::vector<double> get_program_state(const std::string& unop_string, const std:
     // creating temp folder
     std::system("mkdir -p data/tmp");
 
-    // todo remove -O0 flag
     std::string filename = DEFAULT_PLUGIN_OUTPUT_LOCATION;
-    std::string plugin_string = "-fplugin=statetool/statetool.dylib -fplugin-arg-statetool.dylib-filename=" + filename;
-    std::string exec_string = unop_string + plugin_string + optimisations;
+    std::string plugin_string = " -fplugin=statetool.dylib -fplugin-arg-statetool.dylib-filename=" + filename;
+    std::string exec_string = strip_unop(unop_string) + plugin_string + " " + optimisations;
+
+    std::cout << "PROGRAM STATE COMPILE STRING: " << exec_string << std::endl;
 
     // read state vector
     std::system(exec_string.c_str());
     std::vector<double> prog_state = read_state_vector(filename, num_features);
 
     // remove tmp data
-    std::system(((std::string)"rm" + DEFAULT_PLUGIN_OUTPUT_LOCATION).c_str());
+    std::system(((std::string)"rm " + DEFAULT_PLUGIN_OUTPUT_LOCATION).c_str());
 
     return prog_state;
 }
@@ -189,6 +190,43 @@ std::string opt_vec_to_string(const std::vector<std::string>& opts)
 
     for(const auto & opt : opts)
         res += opt;
+
+    return res;
+}
+
+
+bool check_unop_compile(const std::string& unop, const std::string& program_name)
+{
+    // compile the program to location
+    std::system("mkdir -p bin/tmp");
+
+    std::system(unop.c_str());
+
+    const std::filesystem::path unop_path{DEFAULT_EXEC_OUTPUT_LOCATION + program_name};
+    bool res = std::filesystem::exists(unop_path);
+
+    // removing temp program
+    std::system(((std::string)"rm " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name).c_str());
+
+    return res;
+}
+
+
+std::string construct_unop(const std::string& program_name, const std::vector<std::string>& all_benchmarks)
+{
+    std::string res;
+    res = format_benchmark_string(program_name, all_benchmarks);
+    res.append(" -O0");
+
+    return res;
+}
+
+
+std::string strip_unop(const std::string& unop)
+{
+    std::string res;
+
+    res = unop.substr(0, unop.find("-O0"));
 
     return res;
 }
