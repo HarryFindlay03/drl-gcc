@@ -14,11 +14,14 @@
 #include <vector>
 #include <cmath>
 #include <random>
+#include <map>
 
 #include "cpp-nn/network.h"
 #include "envtools/utils.h"
 #include "envtools/RandHelper.h"
 #include "BufferItem.h"
+
+#define NOP (std::string)""
 
 
 /* HELPER FUNCTIONS */
@@ -31,6 +34,9 @@
  * @return Eigen::MatrixXd 
  */
 Eigen::MatrixXd l2_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target);
+
+
+std::vector<std::string> init_action_space(const std::vector<std::string>& as);
 
 
 /* AGENT CLASS DEFINITION */
@@ -54,8 +60,9 @@ class Agent
     /* CURRENT OPTIMISATIONS APPLIED (INT FORM) */
     std::vector<int> opts_remaining;
 
-    /* UNOPTIMISED STRING - acts as environment */
-    std::string unop_string;
+    /* UPDATED ENVIRONMENT CONTAINER */
+    PolyString* curr_env;
+
 
     /* PARAMS */
     unsigned int buffer_size;
@@ -87,8 +94,7 @@ public:
     (
         const std::vector<size_t>& network_config,
         const std::vector<std::string>& actions,
-        const std::string unop_string,
-        const std::string program_name,
+        const std::string& program_name,
         const unsigned int buffer_size, 
         const unsigned int copy_period,
         const unsigned int number_of_episodes,
@@ -127,6 +133,8 @@ public:
     double get_reward(const double new_runtime);
 
     int get_num_features() { return Q->get_layers()[0]->W.rows(); };
+
+    PolyString* get_PolyString() { return curr_env; }; // dangerous function
 
     /* DEBUG HELPER FUNCTIONS */
 

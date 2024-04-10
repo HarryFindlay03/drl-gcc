@@ -13,16 +13,21 @@
 
 #include "envtools/utils.h"
 
+/* GLOBAL BENCHMARK AND OPTIMISATION VECTORS HELD IN MEMORY */
+std::vector<std::string> benchmarks = read_file_to_vec(DEFAULT_BENCHMARKS_LIST_LOCATION);
+std::vector<std::string> optimisations = read_file_to_vec(DEFAULT_OPTIMISATIONS_LIST_LOCATION);
 
-void read_file_to_vec(std::vector<std::string>& vec, const std::string& filename)
+
+std::vector<std::string> read_file_to_vec(const std::string& filename)
 {
+    std::vector<std::string> ret;
     std::string line;
     std::ifstream f(filename);
 
     if(f.is_open())
     {
         while(getline(f, line))
-            vec.push_back(line);
+            ret.push_back(line);
     }
     else
     {
@@ -32,7 +37,7 @@ void read_file_to_vec(std::vector<std::string>& vec, const std::string& filename
 
     f.close();
 
-    return;
+    return ret;
 }
 
 
@@ -58,33 +63,15 @@ std::string get_program_name(const std::string& benchmark)
 }
 
 
-std::string format_benchmark_string(const std::string& benchmark_to_fmt, const std::vector<std::string>& benchmarks)
+std::string format_benchmark_string(const std::string& benchmark_to_fmt)
 {
-    int n = benchmarks.size();
-    if(n == 0)
-    {
-        std::cout << "ERROR: benchmarks file has not been previously read!" << std::endl;
-        std::exit(-1);
-    }
-
-    int i, j;
-    for(i = 0; i < n; i++)
-    {
-        if(get_program_name(benchmarks[i]) == benchmark_to_fmt)
-            break;
-    }
-
-    // benchmark_to_fmt not found
-    if(i == n)
-    {
-        std::cout << "ERROR: program to benchmark not found in available programs" << std::endl;
-        std::exit(-1);
-    }
+    int i = get_benchmark_location(benchmark_to_fmt);
 
     /* forming the benchmark string */
     std::string benchmark_string(POLY_COMPILER + (std::string)" -I polybench-c-3.2/utilities");
 
-    for(j = n; j >= 0; j--)
+    int j;
+    for(j = benchmarks.size(); j >= 0; j--)
         if(benchmarks[i][j] == '/')
             break;
 
@@ -92,6 +79,33 @@ std::string format_benchmark_string(const std::string& benchmark_to_fmt, const s
     benchmark_string.append(benchmarks[i] + " -DPOLYBENCH_TIME -o " + DEFAULT_EXEC_OUTPUT_LOCATION + benchmark_to_fmt);
 
     return benchmark_string;
+}
+
+
+int get_benchmark_location(const std::string& program_name)
+{
+    int n = benchmarks.size();
+    if (n == 0)
+    {
+        std::cout << "ERROR: benchmarks file has not been previously read!" << std::endl;
+        std::exit(-1);
+    }
+
+    int i, j;
+    for (i = 0; i < n; i++)
+    {
+        if (get_program_name(benchmarks[i]) == program_name)
+            break;
+    }
+
+    // benchmark_to_fmt not found
+    if (i == n)
+    {
+        std::cout << "ERROR: program to benchmark not found in available programs" << std::endl;
+        std::exit(-1);
+    }
+
+    return i;
 }
 
 
@@ -138,7 +152,7 @@ double run_given_string(const std::string& compile_string, const std::string& pr
 }
 
 
-std::vector<double> get_program_state(const std::string& unop_string, const std::string& optimisations, int num_features)
+std::vector<double> get_program_state(PolyString* ps, int num_features)
 {
     /* use stateplugin to gather program state from filename passed as plugin argument */
 
@@ -147,15 +161,16 @@ std::vector<double> get_program_state(const std::string& unop_string, const std:
     // creating temp folder
     std::system("mkdir -p data/tmp");
 
-    std::string filename = DEFAULT_PLUGIN_OUTPUT_LOCATION;
-    std::string plugin_string = " -fplugin=statetool.dylib -fplugin-arg-statetool.dylib-filename=" + filename;
-    std::string exec_string = strip_unop(unop_string) + plugin_string + " " + optimisations;
+    // std::string filename = DEFAULT_PLUGIN_OUTPUT_LOCATION;
+    // std::string plugin_string = " -fplugin=statetool.dylib -fplugin-arg-statetool.dylib-filename=" + filename;
+    // std::string exec_string = strip_unop(unop_string) + plugin_string + " " + optimisations;
 
+    std::string exec_string = ps->get_full_PolyString();
     std::cout << "PROGRAM STATE COMPILE STRING: " << exec_string << std::endl;
 
     // read state vector
     std::system(exec_string.c_str());
-    std::vector<double> prog_state = read_state_vector(filename, num_features);
+    std::vector<double> prog_state = read_state_vector(DEFAULT_PLUGIN_OUTPUT_LOCATION, num_features);
 
     // remove tmp data
     std::system(((std::string)"rm " + DEFAULT_PLUGIN_OUTPUT_LOCATION).c_str());
@@ -212,13 +227,28 @@ bool check_unop_compile(const std::string& unop, const std::string& program_name
 }
 
 
-std::string construct_unop(const std::string& program_name, const std::vector<std::string>& all_benchmarks)
+std::string construct_header(const std::string& program_name)
 {
-    std::string res;
-    res = format_benchmark_string(program_name, all_benchmarks);
-    res.append(" -O0");
+    int i = get_benchmark_location(program_name);
 
-    return res;
+    /* forming the header string*/
+    std::string header_string(POLY_COMPILER + (std::string) " -I polybench-c-3.2/utilities");
+
+    int j;
+    for (j = benchmarks.size(); j >= 0; j--)
+        if (benchmarks[i][j] == '/')
+            break;
+
+    header_string.append(" -I " + benchmarks[i].substr(0, j));
+
+    return header_string;
+}
+
+
+std::string get_benchmark_files(const std::string& program_name)
+{
+    int pos = get_benchmark_location(program_name);
+    return ("polybench-c-3.2/utilities/polybench.c " + benchmarks[pos] + " "); 
 }
 
 

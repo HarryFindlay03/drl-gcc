@@ -32,6 +32,15 @@ Eigen::MatrixXd l2_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& ta
 }
 
 
+std::vector<std::string> init_action_space(const std::vector<std::string>& as)
+{
+    std::vector<std::string> res_as(as);
+    res_as.push_back(NOP);
+
+    return res_as;
+}
+
+
 /* AGENT CLASS*/
 
 
@@ -39,8 +48,7 @@ Agent::Agent
 (
     const std::vector<size_t>& network_config,
     const std::vector<std::string>& action_space,
-    const std::string unop_string,
-    const std::string program_name,
+    const std::string& program_name,
     const unsigned int buffer_size,
     const unsigned int copy_period,
     const unsigned int number_of_episodes,
@@ -49,7 +57,7 @@ Agent::Agent
     const double eta
 )
 :
-    unop_string(unop_string),
+    actions(action_space), /* setting agent's action space */
     program_name(program_name),
     buffer_size(buffer_size), 
     copy_period(copy_period), 
@@ -62,6 +70,14 @@ Agent::Agent
     Q = new ML_ANN(network_config, l2_loss);
     Q_hat = new ML_ANN(network_config, l2_loss);
 
+    // construct agent's PolyString (environnment)
+    curr_env = new PolyString
+    (
+        construct_header(program_name),
+        DEFAULT_PLUGIN_INFO,
+        (get_benchmark_files(program_name) + " -o " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name)
+    );
+
     // initially set network weights equal
     copy_network_weights();
 
@@ -69,17 +85,11 @@ Agent::Agent
     buff.resize(buffer_size);
     curr_buff_pos = 0;
 
-    // set action space
-    actions.resize(action_space.size());
-    int pos = 0;
-    for(auto it = actions.begin(); it != actions.end(); ++it)
-        *it = action_space[pos++];
-
     // set opts_applied
     opts_remaining.resize(action_space.size());     
 
     // get no optimisations applied runtime
-    init_runtime = run_given_string((unop_string + "-O0"), program_name);
+    init_runtime = run_given_string(curr_env->get_no_plugin_no_optimisations_PolyString(), program_name);
 
     // instatiante random generator
     rnd = new RandHelper();
@@ -116,19 +126,19 @@ void Agent::train_optimiser(const double epsilon)
 }
 
 
-void Agent::sampling(const double epsilon, bool terminate)
+void Agent::sampling(const double epsilon, bool terminate) //todo this function needs updating for PolyString
 {
-    std::vector<double> curr_st = get_program_state(unop_string, opt_vec_to_string(applied_optimisations), get_num_features());
+    std::vector<double> curr_st = get_program_state(curr_env, get_num_features());
     int action_pos = epsilon_greedy_action(curr_st, epsilon);
 
     // execute in emulator and observe reward
     std::string new_opts = opt_vec_to_string(applied_optimisations) + " " + get_actions()[action_pos];
-    std::vector<double> next_st = get_program_state(unop_string, new_opts, get_num_features());
+    std::vector<double> next_st = get_program_state(curr_env, get_num_features());
 
     // intermediate reward is zero if not episode termination
     double reward = 0;
     if(terminate)
-        reward = get_reward(run_given_string(unop_string + new_opts, program_name));
+        reward = get_reward(run_given_string(curr_env->get_full_PolyString() + new_opts, program_name)); // todo this function also needs work
 
     // save to replay buffer
     buff[(curr_buff_pos++) % buffer_size] = new BufferItem(curr_st, action_pos, reward, next_st, terminate);
