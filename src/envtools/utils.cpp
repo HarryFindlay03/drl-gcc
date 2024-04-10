@@ -65,31 +65,13 @@ std::string get_program_name(const std::string& benchmark)
 
 std::string format_benchmark_string(const std::string& benchmark_to_fmt)
 {
-    int n = benchmarks.size();
-    if(n == 0)
-    {
-        std::cout << "ERROR: benchmarks file has not been previously read!" << std::endl;
-        std::exit(-1);
-    }
-
-    int i, j;
-    for(i = 0; i < n; i++)
-    {
-        if(get_program_name(benchmarks[i]) == benchmark_to_fmt)
-            break;
-    }
-
-    // benchmark_to_fmt not found
-    if(i == n)
-    {
-        std::cout << "ERROR: program to benchmark not found in available programs" << std::endl;
-        std::exit(-1);
-    }
+    int i = get_benchmark_location(benchmark_to_fmt);
 
     /* forming the benchmark string */
     std::string benchmark_string(POLY_COMPILER + (std::string)" -I polybench-c-3.2/utilities");
 
-    for(j = n; j >= 0; j--)
+    int j;
+    for(j = benchmarks.size(); j >= 0; j--)
         if(benchmarks[i][j] == '/')
             break;
 
@@ -100,30 +82,30 @@ std::string format_benchmark_string(const std::string& benchmark_to_fmt)
 }
 
 
-std::string get_benchmark_location(const std::string& program_name)
+int get_benchmark_location(const std::string& program_name)
 {
-   int n = benchmarks.size();
-    if(n == 0)
+    int n = benchmarks.size();
+    if (n == 0)
     {
         std::cout << "ERROR: benchmarks file has not been previously read!" << std::endl;
         std::exit(-1);
     }
 
     int i, j;
-    for(i = 0; i < n; i++)
+    for (i = 0; i < n; i++)
     {
-        if(get_program_name(benchmarks[i]) == program_name)
+        if (get_program_name(benchmarks[i]) == program_name)
             break;
     }
 
     // benchmark_to_fmt not found
-    if(i == n)
+    if (i == n)
     {
         std::cout << "ERROR: program to benchmark not found in available programs" << std::endl;
         std::exit(-1);
     }
 
-    return benchmarks[i];
+    return i;
 }
 
 
@@ -245,13 +227,28 @@ bool check_unop_compile(const std::string& unop, const std::string& program_name
 }
 
 
-std::string construct_unop(const std::string& program_name)
+std::string construct_header(const std::string& program_name)
 {
-    std::string res;
-    res = format_benchmark_string(program_name);
-    res.append(" -O0");
+    int i = get_benchmark_location(program_name);
 
-    return res;
+    /* forming the header string*/
+    std::string header_string(POLY_COMPILER + (std::string) " -I polybench-c-3.2/utilities");
+
+    int j;
+    for (j = benchmarks.size(); j >= 0; j--)
+        if (benchmarks[i][j] == '/')
+            break;
+
+    header_string.append(" -I " + benchmarks[i].substr(0, j));
+
+    return header_string;
+}
+
+
+std::string get_benchmark_files(const std::string& program_name)
+{
+    int pos = get_benchmark_location(program_name);
+    return ("polybench-c-3.2/utilities/polybench.c " + benchmarks[pos] + " "); 
 }
 
 

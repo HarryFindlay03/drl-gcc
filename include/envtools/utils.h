@@ -83,7 +83,7 @@ std::string get_program_name(const std::string& benchmark);
 
 std::string format_benchmark_string(const std::string& benchmark_to_fmt);
 
-std::string get_benchmark_location(const std::string& program_name);
+int get_benchmark_location(const std::string& program_name);
 
 double run_given_string(const std::string& compile_string, const std::string& program_name);
 
@@ -95,7 +95,9 @@ std::string opt_vec_to_string(const std::vector<std::string>& opts);
 
 bool check_unop_compile(const std::string& unop, const std::string& program_name);
 
-std::string construct_unop(const std::string& program_name);
+std::string get_benchmark_files(const std::string& program_name);
+
+std::string construct_header(const std::string& program_name);
 
 std::string strip_unop(const std::string& unop);
 

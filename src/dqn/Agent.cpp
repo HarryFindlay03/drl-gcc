@@ -73,9 +73,9 @@ Agent::Agent
     // construct agent's PolyString (environnment)
     curr_env = new PolyString
     (
-        construct_unop(program_name), 
+        construct_header(program_name),
         DEFAULT_PLUGIN_INFO,
-        ("-c " + get_benchmark_location(program_name) + " -o " + DEFAULT_EXEC_OUTPUT_LOCATION)
+        (get_benchmark_files(program_name) + " -o " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name)
     );
 
     // initially set network weights equal
