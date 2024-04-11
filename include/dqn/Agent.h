@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 25/04/2024
- * FILE LAST UPDATED: 09/05/2024
+ * FILE LAST UPDATED: 11/05/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -131,6 +131,8 @@ public:
     inline const std::vector<std::string>& get_actions() { return actions; };
 
     double get_reward(const double new_runtime);
+
+    inline double get_init_runtime() { return init_runtime; };
 
     int get_num_features() { return Q->get_layers()[0]->W.rows(); };
 

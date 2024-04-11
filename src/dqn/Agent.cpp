@@ -71,12 +71,7 @@ Agent::Agent
     Q_hat = new ML_ANN(network_config, l2_loss);
 
     // construct agent's PolyString (environnment)
-    curr_env = new PolyString
-    (
-        construct_header(program_name),
-        DEFAULT_PLUGIN_INFO,
-        (get_benchmark_files(program_name) + " -o " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name)
-    );
+    curr_env = construct_polybench_PolyString(program_name);
 
     // initially set network weights equal
     copy_network_weights();
@@ -109,6 +104,9 @@ void Agent::train_optimiser(const double epsilon)
 
     for(i = 0; i < number_of_episodes; i++)
     {
+        // reset polystring
+        curr_env->reset_PolyString_optimisations();
+
         for(j = 0; j < episode_length; j++)
         {
             /* sampling */
@@ -126,19 +124,22 @@ void Agent::train_optimiser(const double epsilon)
 }
 
 
-void Agent::sampling(const double epsilon, bool terminate) //todo this function needs updating for PolyString
+void Agent::sampling(const double epsilon, bool terminate)
 {
-    std::vector<double> curr_st = get_program_state(curr_env, get_num_features());
+    std::vector<double> curr_st;
+    std::vector<double> next_st;
+
+    curr_st = get_program_state(curr_env, get_num_features());
     int action_pos = epsilon_greedy_action(curr_st, epsilon);
 
     // execute in emulator and observe reward
-    std::string new_opts = opt_vec_to_string(applied_optimisations) + " " + get_actions()[action_pos];
-    std::vector<double> next_st = get_program_state(curr_env, get_num_features());
+    curr_env->optimisations.push_back(actions[action_pos]);
+    next_st = get_program_state(curr_env, get_num_features());
 
     // intermediate reward is zero if not episode termination
     double reward = 0;
     if(terminate)
-        reward = get_reward(run_given_string(curr_env->get_full_PolyString() + new_opts, program_name)); // todo this function also needs work
+        reward = get_reward(run_given_string(curr_env->get_no_plugin_PolyString(), program_name));
 
     // save to replay buffer
     buff[(curr_buff_pos++) % buffer_size] = new BufferItem(curr_st, action_pos, reward, next_st, terminate);

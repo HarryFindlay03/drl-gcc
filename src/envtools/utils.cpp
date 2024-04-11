@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 14/04/2024
- * FILE LAST UPDATED: 09/05/2024
+ * FILE LAST UPDATED: 11/05/2024
  * 
  * REQUIREMENTS: PolyBench
  * REFERENCES:
@@ -16,6 +16,19 @@
 /* GLOBAL BENCHMARK AND OPTIMISATION VECTORS HELD IN MEMORY */
 std::vector<std::string> benchmarks = read_file_to_vec(DEFAULT_BENCHMARKS_LIST_LOCATION);
 std::vector<std::string> optimisations = read_file_to_vec(DEFAULT_OPTIMISATIONS_LIST_LOCATION);
+
+
+PolyString* construct_polybench_PolyString(const std::string& program_name)
+{
+    PolyString* new_ps = new PolyString
+    (
+        construct_header(program_name),
+        DEFAULT_PLUGIN_INFO,
+        (get_benchmark_files(program_name) + "-DPOLYBENCH_TIME -o " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name)
+    );
+
+    return new_ps;
+}
 
 
 std::vector<std::string> read_file_to_vec(const std::string& filename)
@@ -116,11 +129,13 @@ double run_given_string(const std::string& compile_string, const std::string& pr
     std::system("mkdir -p data/tmp");
 
     // compiling the program
+    std::cout << "run_given_string() compile string: " << compile_string << '\n';
     std::system(compile_string.c_str());
 
 
     // running the program
     std::string exec_string((std::string)"./" + DEFAULT_EXEC_OUTPUT_LOCATION + program_name + (std::string)" > " + DEFAULT_DATA_OUTPUT_LOCATION);
+    std::cout << "Running program string: " << exec_string << '\n';
     std::system(exec_string.c_str());
 
     // extracting the program execution time and cleaning up
@@ -143,7 +158,7 @@ double run_given_string(const std::string& compile_string, const std::string& pr
     output_file.close();
 
     // delete executable
-    std::system(((std::string)"rm " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name).c_str());
+    std::system(((std::string) "rm -f " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name).c_str());
 
     // delete tmp data
     std::system(((std::string)"rm " + DEFAULT_DATA_OUTPUT_LOCATION).c_str());
@@ -161,12 +176,7 @@ std::vector<double> get_program_state(PolyString* ps, int num_features)
     // creating temp folder
     std::system("mkdir -p data/tmp");
 
-    // std::string filename = DEFAULT_PLUGIN_OUTPUT_LOCATION;
-    // std::string plugin_string = " -fplugin=statetool.dylib -fplugin-arg-statetool.dylib-filename=" + filename;
-    // std::string exec_string = strip_unop(unop_string) + plugin_string + " " + optimisations;
-
     std::string exec_string = ps->get_full_PolyString();
-    std::cout << "PROGRAM STATE COMPILE STRING: " << exec_string << std::endl;
 
     // read state vector
     std::system(exec_string.c_str());
