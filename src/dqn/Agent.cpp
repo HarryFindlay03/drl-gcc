@@ -10,9 +10,6 @@
  * DESCRIPTION: An implementation of a deep Q-learning agent following DeepMind's paper.
 */
 
-/* TODO */
-    // implement global static random number generation
-
 
 #include "dqn/Agent.h"
 
@@ -46,29 +43,36 @@ std::vector<std::string> init_action_space(const std::vector<std::string>& as)
 
 Agent::Agent
 (
-    const std::vector<size_t>& network_config,
-    const std::vector<std::string>& action_space,
+    const std::vector<int>& network_config,
+    const std::vector<std::string>& actions,
     const std::string& program_name,
-    const unsigned int buffer_size,
+    const unsigned int buffer_size, 
     const unsigned int copy_period,
     const unsigned int number_of_episodes,
     const unsigned int episode_length,
     const double discount_rate,
-    const double eta
+    const double learning_rate,
+    rand_helper* rnd
 )
 :
-    actions(action_space), /* setting agent's action space */
+    actions(actions), /* setting agent's action space */
     program_name(program_name),
     buffer_size(buffer_size), 
     copy_period(copy_period), 
     number_of_episodes(number_of_episodes), 
     episode_length(episode_length),
     discount_rate(discount_rate),
-    eta(eta)
+    learning_rate(learning_rate),
+    rnd(rnd)
 {
+
+    // creating activation func pair
+    std::pair<mlp_activation_func_t, mlp_activation_func_t> activ_funcs = std::make_pair(mlp_ReLU, mlp_linear);
+    weight_init_func_t initialiasor = he_normal_initialiser;
+
     // instatiate both networks
-    Q = new ML_ANN(network_config, l2_loss);
-    Q_hat = new ML_ANN(network_config, l2_loss);
+    Q = new MLP(network_config, activ_funcs, initialiasor, rnd, learning_rate);
+    Q_hat = new MLP(network_config, activ_funcs, initialiasor, rnd, learning_rate);
 
     // construct agent's PolyString (environnment)
     curr_env = construct_polybench_PolyString(program_name);
@@ -80,14 +84,9 @@ Agent::Agent
     buff.resize(buffer_size);
     curr_buff_pos = 0;
 
-    // set opts_applied
-    opts_remaining.resize(action_space.size());     
-
     // get no optimisations applied runtime
     init_runtime = run_given_string(curr_env->get_no_plugin_no_optimisations_PolyString(), program_name);
 
-    // instatiante random generator
-    rnd = new RandHelper();
 
     return;
 }
@@ -106,6 +105,8 @@ void Agent::train_optimiser(const double epsilon)
     {
         // reset polystring
         curr_env->reset_PolyString_optimisations();
+
+        // reset opts applied
 
         for(j = 0; j < episode_length; j++)
         {
@@ -164,7 +165,7 @@ void Agent::train_phase()
     {
         // find the best action value with Q_hat
         // forward prop the preprocessed state
-        Eigen::MatrixXd out = Q_hat->forward_propogate_rl(b->get_next_st());
+        Eigen::MatrixXd out = Q_hat->forward_propogate(b->get_next_st());
 
         int i;
         double best_pos = 0;
@@ -177,14 +178,14 @@ void Agent::train_phase()
     }
 
     // gradient descent step only on output node j for action j.
-    Eigen::MatrixXd out_Q = Q->forward_propogate_rl(b->get_curr_st());
+    Eigen::MatrixXd out_Q = Q->forward_propogate(b->get_curr_st());
 
     // need the action pos of j - this is where we set yj
     Eigen::MatrixXd out_yj = out_Q;
     out_yj(b->get_action_pos(), 0) = y_j;
 
-    Q->back_propogate_rl(out_yj, out_Q);
-    Q->update_weights_rl(eta);
+    Q->back_propogate(out_Q);
+    Q->update_weights();
 
     return;    
 }
@@ -201,32 +202,20 @@ int Agent::epsilon_greedy_action(const std::vector<double>& st, const double eps
 
     if(r > epsilon)
     {
-        int pos = rnd->choose_random_action(opts_remaining);
-        opts_remaining[pos] = -1;
-
-        return pos;
+        return rnd->random_int_range(0, actions.size()-1);
     }
 
-    Eigen::MatrixXd q_vals = Q->forward_propogate_rl(st);
+    Eigen::MatrixXd q_vals = Q->forward_propogate(st);
 
-    // find the first available action
-    int best_pos = 0;
-    int i;
-    for(i = 0; i < actions.size(); i++)
-    {
-        if(opts_remaining[i] != -1)
-        {
-            best_pos = i;
-            break;
-        }
-    }
 
     // find the best available action
-    for(i = best_pos; i < actions.size(); i++)
-        if((q_vals(i, 0) > q_vals(best_pos, 0)) && (opts_remaining[i] != -1))
+    int best_pos = 0;
+
+    int i;
+    for(i = 1; i < actions.size(); i++)
+        if(q_vals(i, 0) > q_vals(best_pos, 0))
             best_pos = i;
 
-    opts_remaining[best_pos] = -1;
 
     return best_pos;
 }
@@ -238,8 +227,8 @@ void Agent::copy_network_weights()
 
     // for each layer copy the weights matrix (excluding last)
     int i;
-    for(i = 0; i < ((Q->get_num_layers())-1); i++)
-        Q_hat->set_weight_matrix((Q->get_layers())[i]->W, i);
+    for(i = 0; i < ((Q->num_layers)-1); i++)
+        Q_hat->layers[i]->W = Q->layers[i]->W; // todo this may be weird
 
     return;
 }
@@ -255,34 +244,17 @@ double Agent::get_reward(const double new_runtime)
 }
 
 
-double Agent::best_q_hat_value(const std::vector<double>& new_env_st)
-{
-    // find the best q_val for Q_hat output given the new state
-
-    Eigen::MatrixXd q_hat_vals = Q_hat->forward_propogate_rl(new_env_st);
-
-    double best_v = -1;
-    for(const auto & v : q_hat_vals.rowwise())
-    {
-        if(v[0] > best_v)
-            best_v = v[0];
-    }
-
-    return best_v;
-}
-
-
 void Agent::print_networks()
 {
     std::cout << "Q network:\n";
 
-    for(auto l : Q->get_layers())
+    for(auto l : Q->layers)
         std::cout << l->W << "\n\n";
     std::cout << std::endl;
 
     std::cout << "Q_hat network:\n";
 
-    for(auto l : Q_hat->get_layers())
+    for(auto l : Q_hat->layers)
         std::cout << l->W << "\n\n";
     std::cout << std::endl;
 

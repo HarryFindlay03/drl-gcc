@@ -10,6 +10,9 @@
  * DESCRIPTION: Class definition for BufferItem that makes up each item in the replay buffer for DQL.
 */
 
+#ifndef BUFFER_ITEM_H
+#define BUFFER_ITEM_H
+
 #include <vector>
 
 class BufferItem
@@ -39,3 +42,5 @@ public:
 
     inline bool get_terminate() { return terminate; };
 };
+
+#endif /* BUFFER_ITEM_H */
