@@ -15,6 +15,8 @@ typedef std::function<Eigen::MatrixXd(const Eigen::MatrixXd& input, bool deriv)>
 
 typedef std::function<void(Eigen::MatrixXd& mat, int fan_in, int fan_out, rand_helper* rnd)> weight_init_func_t;
 
+typedef std::function<Eigen::MatrixXd(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target)> mlp_loss_func_t;
+
 
 /* main network class definitions */
 
@@ -62,8 +64,8 @@ public:
 class MLP
 {
 public:
-
-    std::vector<Layer*> layers; /* MLP layers */
+    /* MLP layers */
+    std::vector<Layer*> layers;
 
     /* params */
     double learning_rate;
@@ -71,12 +73,16 @@ public:
     /* misc */
     int num_layers;
 
+    /* loss function */
+    mlp_loss_func_t loss_function;
+
 public:
     MLP
     (
         const std::vector<int> &layer_config,
         const std::pair<mlp_activation_func_t, mlp_activation_func_t> &func_pair,
         weight_init_func_t initialiser,
+        mlp_loss_func_t loss_function,
         rand_helper *rnd,
         double learning_rate = 0.3
     );

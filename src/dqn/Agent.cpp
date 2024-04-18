@@ -14,30 +14,6 @@
 #include "dqn/Agent.h"
 
 
-/* HELPER FUNCTIONS */
-
-
-Eigen::MatrixXd l2_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target)
-{
-    Eigen::MatrixXd diff = (output-target);
-
-    int i;
-    for(i = 0; i < diff.size(); i++)
-        *(diff.data() + i) = std::pow(*(diff.data() + i), 2);
-
-    return diff;
-}
-
-
-std::vector<std::string> init_action_space(const std::vector<std::string>& as)
-{
-    std::vector<std::string> res_as(as);
-    res_as.push_back(NOP);
-
-    return res_as;
-}
-
-
 /* AGENT CLASS*/
 
 
@@ -66,13 +42,14 @@ Agent::Agent
     rnd(rnd)
 {
 
-    // creating activation func pair
+    // creating activation func pair and initialisor
     std::pair<mlp_activation_func_t, mlp_activation_func_t> activ_funcs = std::make_pair(mlp_ReLU, mlp_linear);
     weight_init_func_t initialiasor = he_normal_initialiser;
+    mlp_loss_func_t loss_func = dql_square_loss;
 
     // instatiate both networks
-    Q = new MLP(network_config, activ_funcs, initialiasor, rnd, learning_rate);
-    Q_hat = new MLP(network_config, activ_funcs, initialiasor, rnd, learning_rate);
+    Q = new MLP(network_config, activ_funcs, initialiasor, loss_func, rnd, learning_rate);
+    Q_hat = new MLP(network_config, activ_funcs, initialiasor, loss_func, rnd, learning_rate);
 
     // construct agent's PolyString (environnment)
     curr_env = construct_polybench_PolyString(program_name);
@@ -87,26 +64,20 @@ Agent::Agent
     // get no optimisations applied runtime
     init_runtime = run_given_string(curr_env->get_no_plugin_no_optimisations_PolyString(), program_name);
 
-
     return;
 }
 
 
 void Agent::train_optimiser(const double epsilon)
 {
-    int i, j, curr_itr;
+    int i, j;
     bool terminate;
-
-    int num_features = get_num_features();
-    
-    curr_itr = 0;
+    int curr_itr = 0;
 
     for(i = 0; i < number_of_episodes; i++)
     {
         // reset polystring
         curr_env->reset_PolyString_optimisations();
-
-        // reset opts applied
 
         for(j = 0; j < episode_length; j++)
         {
@@ -127,18 +98,31 @@ void Agent::train_optimiser(const double epsilon)
 
 void Agent::sampling(const double epsilon, bool terminate)
 {
+    double reward = 0;
     std::vector<double> curr_st;
     std::vector<double> next_st;
 
     curr_st = get_program_state(curr_env, get_num_features());
+
     int action_pos = epsilon_greedy_action(curr_st, epsilon);
 
-    // execute in emulator and observe reward
-    curr_env->optimisations.push_back(actions[action_pos]);
+    // negatively reward if optimisation has already been applied and don't apply to the environment string 
+    if(std::find(applied_optimisations.begin(), applied_optimisations.end(), action_pos) != applied_optimisations.end())
+    {
+        reward = -1;
+    }
+    else
+    {
+        // execute in emulator and observe reward
+        curr_env->optimisations.push_back(actions[action_pos]);
+    }
+
+    // add to optimisations applied
+
     next_st = get_program_state(curr_env, get_num_features());
 
-    // intermediate reward is zero if not episode termination
-    double reward = 0;
+    // intermediate reward is zero if not episode termination else reward is proportional to the new program runtime compared
+    // against the intitial runtime
     if(terminate)
         reward = get_reward(run_given_string(curr_env->get_no_plugin_PolyString(), program_name));
 
@@ -151,12 +135,12 @@ void Agent::sampling(const double epsilon, bool terminate)
 
 void Agent::train_phase()
 {
-    // random selection from replay buffer to train
-    int max_size = (buff[(curr_buff_pos+1) % buffer_size] == NULL) ? curr_buff_pos : buffer_size;
-    BufferItem* b = buff[rnd->random_int_range(0, max_size)];
+    /* uniformly sample the replay buffer */
+    int max_size = (buff[(curr_buff_pos) % buffer_size] == NULL) ? curr_buff_pos : buffer_size;
+    BufferItem* b = buff[rnd->random_int_range(0, max_size - 1)];
+
 
     double y_j;
-
     if(b->get_terminate())
     {
         y_j = b->get_reward();
@@ -167,12 +151,7 @@ void Agent::train_phase()
         // forward prop the preprocessed state
         Eigen::MatrixXd out = Q_hat->forward_propogate(b->get_next_st());
 
-        int i;
-        double best_pos = 0;
-
-        for(i = 1; i < out.rows(); i++)
-            if(out.row(i)[0] > out.row(best_pos)[0])
-                best_pos = i;
+        int best_pos = Agent::best_q_action(out, actions.size());
 
         y_j = b->get_reward() + (discount_rate * out.row(best_pos)[0]);
     }
@@ -184,6 +163,7 @@ void Agent::train_phase()
     Eigen::MatrixXd out_yj = out_Q;
     out_yj(b->get_action_pos(), 0) = y_j;
 
+    // gradient descent step
     Q->back_propogate(out_Q);
     Q->update_weights();
 
@@ -196,26 +176,16 @@ void Agent::train_phase()
 
 int Agent::epsilon_greedy_action(const std::vector<double>& st, const double epsilon)
 {
-    std::string action_res;
-
     double r = rnd->random_double_range(0.0, 1.0);
 
-    if(r > epsilon)
+    if(r > (1 - epsilon))
     {
         return rnd->random_int_range(0, actions.size()-1);
     }
 
     Eigen::MatrixXd q_vals = Q->forward_propogate(st);
 
-
-    // find the best available action
-    int best_pos = 0;
-
-    int i;
-    for(i = 1; i < actions.size(); i++)
-        if(q_vals(i, 0) > q_vals(best_pos, 0))
-            best_pos = i;
-
+    int best_pos = Agent::best_q_action(q_vals, actions.size());
 
     return best_pos;
 }
@@ -228,7 +198,7 @@ void Agent::copy_network_weights()
     // for each layer copy the weights matrix (excluding last)
     int i;
     for(i = 0; i < ((Q->num_layers)-1); i++)
-        Q_hat->layers[i]->W = Q->layers[i]->W; // todo this may be weird
+        Q_hat->layers[i]->W = Q->layers[i]->W; // this may be weird
 
     return;
 }
@@ -259,4 +229,21 @@ void Agent::print_networks()
     std::cout << std::endl;
 
     return;
+}
+
+
+/* STATIC HELPER FUNCTIONS */
+
+
+int Agent::best_q_action(const Eigen::MatrixXd& input, int n)
+{
+    int best_pos = 0;
+    int i;
+    for(i = 1; i < n; i++)
+    {
+        if(input(0, i) > input(0, best_pos))
+            best_pos = i;
+    }
+
+    return best_pos;
 }
