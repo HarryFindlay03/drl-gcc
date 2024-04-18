@@ -119,6 +119,13 @@ public:
 
     /* HELPER FUNCTIONS*/
 
+    /**
+     * @brief Returns an index representing the chosen action from Agent's actions.
+     * 
+     * @param st 
+     * @param epsilon 
+     * @return int 
+     */
     int epsilon_greedy_action(const std::vector<double>& st, const double epsilon);
 
     void copy_network_weights();
@@ -136,6 +143,11 @@ public:
     /* DEBUG HELPER FUNCTIONS */
 
     void print_networks();
+
+    /* STATIC HELPER FUNCTIONS */
+    
+    static int best_q_action(const Eigen::MatrixXd& input, int n);
+
 };
 
 #endif /* AGENT_H */

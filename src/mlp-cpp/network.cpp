@@ -70,10 +70,11 @@ MLP::MLP
     const std::vector<int>& layer_config,
     const std::pair<mlp_activation_func_t, mlp_activation_func_t> & func_pair,
     weight_init_func_t initialiser,
+    mlp_loss_func_t loss_function,
     rand_helper* rnd,
     double learning_rate
 )
-: learning_rate(learning_rate)
+: loss_function(loss_function), learning_rate(learning_rate)
 {
     num_layers = layer_config.size();
 
@@ -147,7 +148,8 @@ Eigen::MatrixXd MLP::forward_propogate(const std::vector<double>& input)
 void MLP::back_propogate(const Eigen::MatrixXd& target)
 {
     /* output layer */
-    layers[num_layers-1]->G = (target - layers[num_layers-1]->Z);
+    // layers[num_layers-1]->G = (target - layers[num_layers-1]->Z);
+    layers[num_layers-1]->G = loss_function(layers[num_layers-1]->Z, target);
 
     /* back propogating through remaining excluding input */
     int i;
@@ -161,7 +163,7 @@ void MLP::update_weights()
     int i;
     for(i = 0; i < (num_layers-1); i++)
     {
-        Eigen::MatrixXd W_diff = (learning_rate) * (layers[i]->Z.transpose().eval() * layers[i+1]->G);
+        Eigen::MatrixXd W_diff = -(learning_rate) * (layers[i]->Z.transpose().eval() * layers[i+1]->G);
         layers[i]->W += W_diff;
     }
 }
