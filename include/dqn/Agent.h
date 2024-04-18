@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 25/04/2024
- * FILE LAST UPDATED: 09/05/2024
+ * FILE LAST UPDATED: 11/05/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -10,15 +10,21 @@
  * DESCRIPTION: Class definition for deep Q-learning agent following DeepMind's paper.
 */
 
+#ifndef AGENT_H
+#define AGENT_H
+
 #include <string>
 #include <vector>
 #include <cmath>
 #include <random>
 #include <map>
 
-#include "cpp-nn/network.h"
-#include "envtools/utils.h"
-#include "envtools/RandHelper.h"
+#include "mlp-cpp/network.h"
+#include "mlp-cpp/funcs.h"
+
+#include "utils/utils.h"
+#include "utils/rand_helper.h"
+
 #include "BufferItem.h"
 
 #define NOP (std::string)""
@@ -45,8 +51,8 @@ std::vector<std::string> init_action_space(const std::vector<std::string>& as);
 class Agent
 {
     /* NETWORKS */
-    ML_ANN* Q;
-    ML_ANN* Q_hat;
+    MLP* Q;
+    MLP* Q_hat;
 
     /* REPLAY BUFFER */
     std::vector<BufferItem*> buff;
@@ -55,14 +61,10 @@ class Agent
     std::vector<std::string> actions;
 
     /* CURRENT OPTIMISATIONS APPLIED */
-    std::vector<std::string> applied_optimisations;
-
-    /* CURRENT OPTIMISATIONS APPLIED (INT FORM) */
-    std::vector<int> opts_remaining;
+    std::vector<int> applied_optimisations;
 
     /* UPDATED ENVIRONMENT CONTAINER */
     PolyString* curr_env;
-
 
     /* PARAMS */
     unsigned int buffer_size;
@@ -70,29 +72,21 @@ class Agent
     unsigned int number_of_episodes;
     unsigned int episode_length;
     double discount_rate;
-    double eta;
+    double learning_rate;
 
     /* PRIVATE VALUES */
     double init_runtime;
     std::string program_name;
     unsigned int curr_buff_pos;
-    RandHelper* rnd;
 
-    // state extraction function
-    // loss function - passed to cpp-nn!
-
-    /**
-     * @brief finds and returns the best q value for q_hat
-     * 
-     * @return double 
-     */
-    inline double best_q_hat_value(const std::vector<double>& new_env_st);
+    /* RANDOM HELPER */
+    rand_helper* rnd;
 
 
 public:
     Agent
     (
-        const std::vector<size_t>& network_config,
+        const std::vector<int>& network_config,
         const std::vector<std::string>& actions,
         const std::string& program_name,
         const unsigned int buffer_size, 
@@ -100,7 +94,8 @@ public:
         const unsigned int number_of_episodes,
         const unsigned int episode_length,
         const double discount_rate,
-        const double eta
+        const double learning_rate,
+        rand_helper* rnd
     );
 
     ~Agent()
@@ -132,7 +127,9 @@ public:
 
     double get_reward(const double new_runtime);
 
-    int get_num_features() { return Q->get_layers()[0]->W.rows(); };
+    inline double get_init_runtime() { return init_runtime; };
+
+    int get_num_features() { return Q->layers[0]->W.rows(); };
 
     PolyString* get_PolyString() { return curr_env; }; // dangerous function
 
@@ -140,3 +137,5 @@ public:
 
     void print_networks();
 };
+
+#endif /* AGENT_H */

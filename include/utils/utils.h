@@ -54,6 +54,7 @@ struct PolyString
     PolyString(const std::string& header, const std::string& plugin_info, const std::string& output)
     : header(header), plugin_info(plugin_info), output(output) {};
 
+    void reset_PolyString_optimisations() { optimisations.clear(); };
 
     /**
      * @brief Get the full PolyString as one string seperated by spaces in order: header - plugin_info - output - optimisations
@@ -70,12 +71,23 @@ struct PolyString
         return res;
     };
 
+    inline std::string get_no_plugin_PolyString()
+    {
+        std::string res = header + " " + output + " ";
+
+        for(auto const& s : optimisations)
+            res += (s + " ");
+
+        return res;
+    }
+
     inline std::string get_no_plugin_no_optimisations_PolyString()
     {
         return header + " " + output + " -O0";
     };
 };
 
+PolyString* construct_polybench_PolyString(const std::string& program_name);
 
 std::vector<std::string> read_file_to_vec(const std::string& filename);
 

@@ -2,11 +2,11 @@
 bin/
 build/
 
-# personal test dev file
-src/driver.cpp
+# personal test dev files
+src/examples/driver*
 
 # include
-include/cpp-nn/Eigen/
+include/mlp-cpp/Eigen/
 
 # build libraries
 statetool.dylib

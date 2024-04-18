@@ -1,16 +1,26 @@
 CC = g++
 CC_FLAGS = -I include/
 
-default: driver
-
 network.o:
-	$(CC) $(CC_FLAGS) -c src/cpp-nn/network.cpp -o build/$@
+	$(CC) $(CC_FLAGS) -c src/mlp-cpp/network.cpp -o build/$@
+
+funcs.o:
+	$(CC) $(CC_FLAGS) -c src/mlp-cpp/funcs.cpp -o build/$@
 
 Agent.o:
 	$(CC) $(CC_FLAGS) -c src/dqn/Agent.cpp -o build/$@
 
 utils.o:
-	$(CC) $(CC_FLAGS) -c src/envtools/utils.cpp -o build/$@
+	$(CC) $(CC_FLAGS) -c src/utils/utils.cpp -o build/$@
 
-driver: src/driver.cpp network.o Agent.o utils.o
-	$(CC) $(CC_FLAGS) src/driver.cpp  build/network.o build/Agent.o build/utils.o -o bin/$@
+driver: network.o Agent.o utils.o
+	$(CC) $(CC_FLAGS) src/examples/driver.cpp  build/network.o build/Agent.o build/utils.o -o bin/$@
+
+driver_agent: network.o funcs.o Agent.o utils.o
+	$(CC) $(CC_FLAGS) src/examples/driver_agent.cpp build/network.o build/funcs.o build/Agent.o build/utils.o -o bin/$@
+
+driver_mlp: network.o funcs.o
+	$(CC) $(CC_FLAGS) src/examples/driver_mlp.cpp build/network.o build/funcs.o -o bin/$@
+
+example_agent: network.o funcs.o Agent.o utils.o
+	$(CC) $(CC_FLAGS) src/examples/driver_agent.cpp build/network.o build/funcs.o build/Agent.o build/utils.o -o bin/$@
