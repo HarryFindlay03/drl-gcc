@@ -13,6 +13,9 @@ Agent.o:
 utils.o:
 	$(CC) $(CC_FLAGS) -c src/utils/utils.cpp -o build/$@
 
+statetool:
+	./plug.sh
+
 driver: network.o Agent.o utils.o
 	$(CC) $(CC_FLAGS) src/examples/driver.cpp  build/network.o build/Agent.o build/utils.o -o bin/$@
 
