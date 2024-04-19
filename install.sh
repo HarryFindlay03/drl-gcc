@@ -45,3 +45,7 @@ fi
 if [ $structure_correct -eq 1 ]; then
     echo "Folder structure correct, program expected to run okay."
 fi
+
+if [ $structure_correct -eq 0 ]; then
+    echo "Folder structure INcorrect, please remedy above error messages to fix problems and rerun this script."
+fi
