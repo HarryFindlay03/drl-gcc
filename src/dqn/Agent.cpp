@@ -148,12 +148,11 @@ void Agent::train_phase()
     else
     {
         // find the best action value with Q_hat
-        // forward prop the preprocessed state
         Eigen::MatrixXd out = Q_hat->forward_propogate(b->get_next_st());
 
         int best_pos = Agent::best_q_action(out, actions.size());
 
-        y_j = b->get_reward() + (discount_rate * out.row(best_pos)[0]);
+        y_j = b->get_reward() + (discount_rate * out(0, best_pos));
     }
 
     // gradient descent step only on output node j for action j.
@@ -161,10 +160,10 @@ void Agent::train_phase()
 
     // need the action pos of j - this is where we set yj
     Eigen::MatrixXd out_yj = out_Q;
-    out_yj(b->get_action_pos(), 0) = y_j;
+    out_yj(0, b->get_action_pos()) = y_j;
 
     // gradient descent step
-    Q->back_propogate(out_Q);
+    Q->back_propogate(out_yj);
     Q->update_weights();
 
     return;    
