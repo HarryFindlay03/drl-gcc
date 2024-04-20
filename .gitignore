@@ -14,6 +14,9 @@ statetool.dylib
 # polybench library
 /polybench-c-3.2
 
+# result evaluation
+.env/
+
 # misc
 .DS_Store
 /.vscode
