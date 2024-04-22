@@ -132,12 +132,40 @@ Eigen::MatrixXd dql_square_loss(const Eigen::MatrixXd& output, const Eigen::Matr
 }
 
 
-// Eigen::MatrixXd huber_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target, int action_pos)
-// {
-//     Eigen::MatrixXd new_target = Eigen::MatrixXd::Zero(target.rows(), target.cols());
-//     new_target(0, action_pos) = target(0, action_pos);
+Eigen::MatrixXd dql_square_loss_with_error_clipping(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target, int action_pos)
+{
 
-// }
+    Eigen::MatrixXd new_target = Eigen::MatrixXd::Zero(target.rows(), target.cols());
+    new_target(0, action_pos) = target(0, action_pos);
+
+    // error clipping
+    Eigen::MatrixXd new_output(output);
+    if(output(0, action_pos) > 1)
+        new_output(0, action_pos) = 1;
+    if(output(0, action_pos) < -1)
+        new_output(0, action_pos) = -1;
+
+    return (new_output - new_target).array().square().matrix();
+}
+
+
+Eigen::MatrixXd huber_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target, int action_pos)
+{
+    double huber_delta = 1; // clipping between -1 and 1
+
+    Eigen::MatrixXd new_target = Eigen::MatrixXd::Zero(target.rows(), target.cols());
+    new_target(0, action_pos) = target(0, action_pos);
+
+    bool status = (std::fabs(output(0, action_pos) - new_target(0, action_pos)) <= huber_delta);
+
+    Eigen::MatrixXd res = Eigen::MatrixXd::Zero(target.rows(), target.cols());
+    if(status)
+        res(0, action_pos) = 0.5 * (std::pow((output(0, action_pos) - new_target(0, action_pos)), 2));
+    else
+        res(0, action_pos) = huber_delta * ((std::fabs(output(0, action_pos) - new_target(0, action_pos))) - (0.5 * huber_delta));
+
+    return res;
+}
 
 
 Eigen::MatrixXd standard_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target, int action_pos)
