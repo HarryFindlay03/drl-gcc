@@ -61,5 +61,15 @@ Eigen::MatrixXd huber_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd&
 
 Eigen::MatrixXd standard_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target, int action_pos);
 
+/* SCALING FUNCTIONS */
+
+/**
+ * @brief Scale feature vector into interval [0, 1].
+ * 
+ * @param in 
+ * @return std::vector<double> 
+ */
+std::vector<double> vec_min_max_scaling(const std::vector<double>& in);
+
 
 #endif /* FUNCS_H */

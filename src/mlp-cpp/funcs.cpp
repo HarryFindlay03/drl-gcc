@@ -172,3 +172,41 @@ Eigen::MatrixXd standard_loss(const Eigen::MatrixXd& output, const Eigen::Matrix
 {
     return output - target;
 }
+
+
+/* SCALING FUNCTIONS */
+
+
+std::vector<double> vec_min_max_scaling(const std::vector<double>& in)
+{
+    std::vector<double> res(in.size());
+
+    auto find_val = [](const std::vector<double>& vec_in, bool max)
+    {
+        int val_pos = 0;
+        int x;
+        if(max)
+        {
+            for(x = 1; x < vec_in.size(); x++)
+                if(vec_in[x] > vec_in[val_pos])
+                    val_pos = x;
+        }
+        else
+        {
+            for(x = 1; x < vec_in.size(); x++)
+                if(vec_in[x] < vec_in[val_pos])
+                    val_pos = x;
+        }
+
+        return val_pos;
+    };
+
+    double min = in[find_val(in, false)];
+    double max = in[find_val(in, true)];
+
+    int i;
+    for(i = 0; i < res.size(); i++)
+        res[i] = (in[i] - min) / (max - min);
+
+    return res;
+}
