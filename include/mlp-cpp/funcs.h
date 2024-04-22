@@ -28,8 +28,11 @@ void he_normal_initialiser(Eigen::MatrixXd& mat, int fan_in, int fan_out, rand_h
 
 /* LOSS FUNCTIONS */
 
-Eigen::MatrixXd dql_square_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target);
+Eigen::MatrixXd dql_square_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target, int action_pos);
 
-Eigen::MatrixXd standard_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target);
+Eigen::MatrixXd huber_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target, int action_pos);
+
+Eigen::MatrixXd standard_loss(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target, int action_pos);
+
 
 #endif /* FUNCS_H */

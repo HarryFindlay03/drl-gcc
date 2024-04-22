@@ -148,8 +148,20 @@ Eigen::MatrixXd MLP::forward_propogate(const std::vector<double>& input)
 void MLP::back_propogate(const Eigen::MatrixXd& target)
 {
     /* output layer */
+    layers[num_layers-1]->G = loss_function(layers[num_layers-1]->Z, target, 0); // action_pos not relevant
+
+    /* back propogating through remaining excluding input */
+    int i;
+    for(i = (num_layers-2); i > 0; i--)
+        layers[i]->G = layers[i]->Fp.array().eval() * (layers[i+1]->G * layers[i]->W.transpose().eval()).array().eval();
+}
+
+
+void MLP::back_propogate_rl(const Eigen::MatrixXd& target, int action_pos)
+{
+    /* output layer */
     // layers[num_layers-1]->G = (target - layers[num_layers-1]->Z);
-    layers[num_layers-1]->G = loss_function(layers[num_layers-1]->Z, target);
+    layers[num_layers-1]->G = loss_function(layers[num_layers-1]->Z, target, action_pos);
 
     /* back propogating through remaining excluding input */
     int i;

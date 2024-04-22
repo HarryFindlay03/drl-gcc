@@ -15,7 +15,7 @@ typedef std::function<Eigen::MatrixXd(const Eigen::MatrixXd& input, bool deriv)>
 
 typedef std::function<void(Eigen::MatrixXd& mat, int fan_in, int fan_out, rand_helper* rnd)> weight_init_func_t;
 
-typedef std::function<Eigen::MatrixXd(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target)> mlp_loss_func_t;
+typedef std::function<Eigen::MatrixXd(const Eigen::MatrixXd& output, const Eigen::MatrixXd& target, int action_pos)> mlp_loss_func_t;
 
 
 /* main network class definitions */
@@ -91,6 +91,8 @@ public:
     Eigen::MatrixXd forward_propogate(const std::vector<double>& input);
 
     void back_propogate(const Eigen::MatrixXd& target);
+
+    void back_propogate_rl(const Eigen::MatrixXd& target, int action_pos);
 
     void update_weights();
 };
