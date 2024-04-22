@@ -41,7 +41,7 @@ Agent::Agent
     learning_rate(learning_rate),
     rnd(rnd)
 {
-
+    // todo normalisation of feature vector
     // creating activation func pair and initialisor
     std::pair<mlp_activation_func_t, mlp_activation_func_t> activ_funcs = std::make_pair(mlp_ReLU, mlp_linear);
     weight_init_func_t initialiasor = he_normal_initialiser;
@@ -117,9 +117,16 @@ void Agent::sampling(const double epsilon, bool terminate)
         curr_env->optimisations.push_back(actions[action_pos]);
     }
 
-    // add to optimisations applied
 
     next_st = get_program_state(curr_env, get_num_features());
+
+    std::cout << "Curr state: ";
+    for(auto const& v : curr_st)
+        std::cout << v << " ";
+    std::cout << "\t Next state: ";
+    for(auto const& v : next_st)
+        std::cout << v << " ";
+    std::cout << "\n\n";
 
     // intermediate reward is zero if not episode termination else reward is proportional to the new program runtime compared
     // against the intitial runtime
@@ -155,18 +162,18 @@ void Agent::train_phase()
         y_j = b->get_reward() + (discount_rate * out(0, best_pos));
     }
 
-    // gradient descent step only on output node j for action j.
+    // forward proporgate to save network output in Q object
     Eigen::MatrixXd out_Q = Q->forward_propogate(b->get_curr_st());
 
-    // need the action pos of j - this is where we set yj
-    Eigen::MatrixXd out_yj = out_Q;
+    // setting yj
+    Eigen::MatrixXd out_yj = Eigen::MatrixXd::Zero(out_Q.rows(), out_Q.cols());
     out_yj(0, b->get_action_pos()) = y_j;
 
     // gradient descent step
-    Q->back_propogate(out_yj);
+    Q->back_propogate_rl(out_yj, b->get_action_pos());
     Q->update_weights();
 
-    return;    
+    return;
 }
 
 

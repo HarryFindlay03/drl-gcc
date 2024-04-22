@@ -92,7 +92,7 @@ public:
 
     void back_propogate(const Eigen::MatrixXd& target);
 
-    void back_propogate_rl(const Eigen::MatrixXd& target, int action_pos);
+    void back_propogate_rl(const Eigen::MatrixXd& yj, int action_pos);
 
     void update_weights();
 };

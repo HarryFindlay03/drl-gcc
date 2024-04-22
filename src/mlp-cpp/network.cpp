@@ -157,11 +157,10 @@ void MLP::back_propogate(const Eigen::MatrixXd& target)
 }
 
 
-void MLP::back_propogate_rl(const Eigen::MatrixXd& target, int action_pos)
+void MLP::back_propogate_rl(const Eigen::MatrixXd& yj, int action_pos)
 {
     /* output layer */
-    // layers[num_layers-1]->G = (target - layers[num_layers-1]->Z);
-    layers[num_layers-1]->G = loss_function(layers[num_layers-1]->Z, target, action_pos);
+    layers[num_layers-1]->G = loss_function(yj, layers[num_layers-1]->Z, action_pos);
 
     /* back propogating through remaining excluding input */
     int i;
