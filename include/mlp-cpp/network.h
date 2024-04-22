@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <vector>
+#include <fstream>
 
 #include "Eigen/Core"
 
@@ -96,5 +97,12 @@ public:
 
     void update_weights();
 };
+
+/* LOADING AND SAVING WEIGHTS */
+
+void save_weights(const MLP* net, const std::string& filename);
+
+void load_weights(MLP* net, const std::string& filename);
+
 
 #endif /* NETWORK_H */

@@ -178,3 +178,76 @@ void MLP::update_weights()
         layers[i]->W += W_diff;
     }
 }
+
+
+/* LOADING AND SAVING WEIGHTS */
+
+
+void save_weights(const MLP* net, const std::string& filename)
+{
+    std::ofstream output_file(filename.c_str());
+
+    if(!(output_file.is_open()))
+    {
+        std::cerr << "FILENAME ENTERED IS NOT VALID! CANNOT WRITE NETWORK TO FILE\n";
+        return;
+    }
+
+    /* file opened successfully */
+    for(auto const& l : net->layers)
+    {
+        for(auto const& r : (l->W).rowwise())
+        {
+            for(auto const& v : r)
+                output_file << v << '\n';
+        }
+        output_file << "<br>\n"; /* helper to reconstruct network*/
+    }
+
+    output_file.close();
+}
+
+
+void load_weights(MLP* net, const std::string& filename)
+{
+    std::ifstream input_file(filename.c_str());
+
+    if(!(input_file.is_open()))
+    {
+        std::cerr << "FILENAME ENTERED IS NOT VALID! CANNOT READ NETWORK FROM FILE\n";
+        return;
+    }
+
+    /* file open success */
+
+    int layer_pos = 0;
+    int col = 0;
+    int row = 0;
+
+    std::string line;
+    while(getline(input_file, line))
+    {
+        if(layer_pos >= net->num_layers)
+            break;
+
+        if(!(strcmp(line.c_str(), "<br>")))
+        {
+            layer_pos++;
+            col = 0;
+            row = 0;
+            continue;
+        }
+
+        ((net->layers)[layer_pos]->W)(row, col++) = std::stod(line);
+
+        if((col == (net->layers[layer_pos]->W.cols())))
+        {
+            row++;
+            col = 0;
+        }
+    }
+
+    input_file.close();
+
+    return;
+}
