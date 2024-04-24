@@ -9,6 +9,10 @@ mkdir -p "data/tmp"
 mkdir -p "bin/tmp"
 echo "Creating temp folders for data storage."
 
+# Making folders for training information
+mkdir -p "data/training"
+echo "Creating folders for training data."
+
 # Checking that folders have been created correctly
 echo "Checking folder structure existence."
 
@@ -29,6 +33,11 @@ if [ ! -d "data/tmp" ]; then
     structure_correct=0
 fi
 
+if [ ! -d "data/training" ]; then
+    echo "Training data folder NOT created, program will not run correctly!"
+    structure_correct=0
+fi
+
 if [ ! -d "bin/tmp" ]; then
     echo "Temp exec folder NOT created, program will not run correctly!"
     structure_correct=0
@@ -39,6 +48,13 @@ echo "Checking Eigen library has been installed correctly."
 if [ ! -d "include/mlp-cpp/Eigen" ]; then
     echo "Eigen library not installed, program will not work!"
     echo "Please copy the Eigen header library into include/mlp-cpp/."
+    structure_correct=0
+fi
+
+# checking that PolyBench has been installed correctly
+echo "Checking PolyBench has been installed correctly"
+if [ ! -d "polybench-c-3.2" ]; then
+    echo "PolyBench not installed correctly, formatting functions will not operate."
     structure_correct=0
 fi
 
