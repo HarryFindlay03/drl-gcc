@@ -329,25 +329,3 @@ std::string strip_unop(const std::string& unop)
 
     return res;
 }
-
-
-std::vector<std::string> load_action_space(const std::string& filename)
-{
-    std::vector<std::string> res_as;
-
-    std::ifstream as_file(filename);
-
-    if(as_file.is_open())
-    {
-        std::string line;
-        while(getline(as_file, line))
-            res_as.push_back(line);
-    }
-    else
-    {
-        std::cerr << "Filename / path not recognised, could not read action space.\n";
-        return {"-1"};
-    }
-
-    return res_as;
-}

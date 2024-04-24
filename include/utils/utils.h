@@ -104,12 +104,5 @@ std::string construct_header(const std::string& program_name);
 
 std::string strip_unop(const std::string& unop);
 
-/**
- * @brief load an action space from given line seperated action-space .txt file
- * 
- * @param filename 
- * @return std::vector<std::string> 
- */
-std::vector<std::string> load_action_space(const std::string& filename);
 
 #endif
