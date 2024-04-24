@@ -1,0 +1,13 @@
+-falign-functions -falign-labels
+-fcaller-saves
+-fcode-hoist -fhoist-adjacent-loads
+-fcrossjumping
+-finline-functions -finline-small-functions -finline-partial-inlining -findirect-inlining
+-fipa-bit-cp  -fipa-cp  -fipa-icf
+-fipa-ra  -fipa-sra  -fipa-vrp
+-flra-remat
+-foptimize-sibling-calls
+-fstore-merging
+-fstrict-aliasing
+-fthread-jumps
+-ftree-builtin-call-dce -ftree-builtin-call-dce -ftree-switch-conversion -ftree-tail-merge -ftree-vrp

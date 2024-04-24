@@ -1,0 +1,11 @@
+-falign-loops
+-fcse-follow-jumps
+-fcse-skip-blocks
+-ffinite-loops
+-fgcse
+-fgcse-lm
+-frerun-cse-after-loop
+-ftree-loop-vectorize
+-ftree-pre
+-ftree-slp-vectorize
+-fvect-cost-model=very-cheap
