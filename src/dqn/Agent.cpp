@@ -14,9 +14,7 @@
 #include "dqn/Agent.h"
 
 // todo
-// loading action-spaces and training program sets
-// determining good optimisation sets with trained policy
-
+// update the reward function to be positive and negative
 
 /* AGENT CLASS*/
 
@@ -25,7 +23,7 @@ Agent::Agent
 (
     const std::vector<int>& network_config,
     const std::vector<std::string>& actions,
-    const std::string& program_name,
+    const std::vector<std::string>& program_names,
     const unsigned int buffer_size, 
     const unsigned int copy_period,
     const unsigned int number_of_episodes,
@@ -37,7 +35,7 @@ Agent::Agent
 )
 :
     actions(actions), /* setting agent's action space */
-    program_name(program_name),
+    program_names(program_names),
     buffer_size(buffer_size), 
     copy_period(copy_period), 
     number_of_episodes(number_of_episodes), 
@@ -57,9 +55,9 @@ Agent::Agent
     Q = new MLP(network_config, activ_funcs, initialiasor, loss_func, rnd, learning_rate);
     Q_hat = new MLP(network_config, activ_funcs, initialiasor, loss_func, rnd, learning_rate);
 
-    // construct agent's PolyString (environnment)
-    std::string optimisation_baseline = "-01"; // changeable parameter based on action-space chosen
-    curr_env = construct_polybench_PolyString(program_name, optimisation_baseline);
+    // set optimisation baseline
+    optimisation_baseline = "-O1"; // changeable parameter based on action-space chosen
+    curr_env = construct_polybench_PolyString(program_names[0], optimisation_baseline);
 
     // initially set network weights equal
     copy_network_weights();
@@ -68,8 +66,11 @@ Agent::Agent
     buff.resize(buffer_size);
     curr_buff_pos = 0;
 
+    // resize applied_optimisations to size of action space - 1 in pos i represents optimisation i has been applied
+    applied_optimisations.resize(actions.size());
+
     // get no optimisations applied runtime
-    init_runtime = run_given_string(curr_env->get_no_plugin_no_optimisations_PolyString(), program_name);
+    init_runtime = run_given_string(curr_env->get_no_plugin_no_optimisations_PolyString(), program_names[0]);
 
     // open gradient file in order for agent to write gradient to file
     if(gradient_monitoring)
@@ -95,9 +96,6 @@ void Agent::train_optimiser(const double epsilon)
 
     for(i = 0; i < number_of_episodes; i++)
     {
-        // reset polystring
-        curr_env->reset_PolyString_optimisations();
-
         for(j = 0; j < episode_length; j++)
         {
             /* sampling */
@@ -117,6 +115,19 @@ void Agent::train_optimiser(const double epsilon)
 
             curr_itr++;
         }
+
+        /* on episode completion */
+
+        // reset the environment with a uniformally chosen new program, regenerate the initial runtime for the new chosen program, and reset applied optimisations
+        int program_pos = rnd->random_int_range(0, program_names.size()-1);
+
+        curr_env->reset_PolyString_environment(program_names[program_pos]);
+
+        init_runtime = run_given_string(curr_env->get_no_plugin_no_optimisations_PolyString(), program_names[program_pos]);
+
+        // reset applied_optimisations to all zeros
+        for(auto it = applied_optimisations.begin(); it != applied_optimisations.end(); ++it)
+            *it = 0;
     }
 }
 
@@ -132,7 +143,7 @@ void Agent::sampling(const double epsilon, bool terminate)
     int action_pos = epsilon_greedy_action(curr_st, epsilon);
 
     // negatively reward if optimisation has already been applied and don't apply to the environment string 
-    if(std::find(applied_optimisations.begin(), applied_optimisations.end(), action_pos) != applied_optimisations.end())
+    if(applied_optimisations[action_pos] == 1)
     {
         reward = -1;
     }
@@ -140,23 +151,24 @@ void Agent::sampling(const double epsilon, bool terminate)
     {
         // execute in emulator and observe reward
         curr_env->optimisations.push_back(actions[action_pos]);
+        applied_optimisations[action_pos] = 1;
     }
 
 
     next_st = get_program_state(curr_env, get_num_features());
 
-    // std::cout << "Curr state: ";
-    // for(auto const& v : vec_min_max_scaling(curr_st))
-    //     std::cout << v << " ";
-    // std::cout << "\t Next state: ";
-    // for(auto const& v : next_st)
-    //     std::cout << v << " ";
-    // std::cout << "\n\n";
+    std::cout << "Curr state: ";
+    for(auto const& v : curr_st)
+        std::cout << v << " ";
+    std::cout << "\t Next state: ";
+    for(auto const& v : next_st)
+        std::cout << v << " ";
+    std::cout << "\n\n";
 
     // intermediate reward is zero if not episode termination else reward is proportional to the new program runtime compared
     // against the intitial runtime
     if(terminate)
-        reward = get_reward(run_given_string(curr_env->get_no_plugin_PolyString(), program_name));
+        reward = get_reward(run_given_string(curr_env->get_no_plugin_PolyString(), curr_env->program_name));
 
     // save to replay buffer
     buff[(curr_buff_pos++) % buffer_size] = new BufferItem(curr_st, action_pos, reward, next_st, terminate);

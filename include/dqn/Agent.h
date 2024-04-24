@@ -83,9 +83,18 @@ private:
     double learning_rate;
 
     /* PRIVATE VALUES */
-    double init_runtime;
-    std::string program_name;
-    unsigned int curr_buff_pos;
+
+    // for reward calculation
+    double init_runtime; 
+
+    // programs to choose from for each episode of optimisation
+    std::vector<std::string> program_names;
+
+    // optimisation baseline for construction of environment and working with action spaces
+    std::string optimisation_baseline;
+
+    // to place transition correctly in buffer
+    unsigned int curr_buff_pos; 
 
     /* RANDOM HELPER */
     rand_helper* rnd;
@@ -100,7 +109,7 @@ public:
     (
         const std::vector<int>& network_config,
         const std::vector<std::string>& actions,
-        const std::string& program_name,
+        const std::vector<std::string>& program_names,
         const unsigned int buffer_size, 
         const unsigned int copy_period,
         const unsigned int number_of_episodes,

@@ -19,11 +19,69 @@ std::vector<std::string> benchmarks = read_file_to_vec(DEFAULT_BENCHMARKS_LIST_L
 std::vector<std::string> optimisations = read_file_to_vec(DEFAULT_OPTIMISATIONS_LIST_LOCATION);
 
 
+/* PolyString ENVIRONMENT IMPLEMENTATION */
+
+
+PolyString::PolyString(const std::string &program_name, const std::string &plugin_info, const std::string &output, const std::string &baseline)
+:
+    program_name(program_name), 
+    header(construct_header(program_name)),
+    plugin_info(plugin_info), 
+    output(output),
+    optimisation_baseline(baseline)
+{ }
+
+void PolyString::reset_PolyString_optimisations() { optimisations.clear(); };
+
+
+void PolyString::reset_PolyString_environment(const std::string &new_program_name)
+{
+    optimisations.clear();
+
+    program_name = new_program_name;
+    header = construct_header(new_program_name);
+    output = (get_benchmark_files(new_program_name) + "-DPOLYBENCH_TIME -o " + DEFAULT_EXEC_OUTPUT_LOCATION + new_program_name);
+
+    return;
+}
+
+
+std::string PolyString::get_full_PolyString()
+{
+    std::string res = header + " " + plugin_info + " " + output + " " + optimisation_baseline + " ";
+
+    for (auto const &s : optimisations)
+        res += (s + " ");
+
+    return res;
+};
+
+
+std::string PolyString::get_no_plugin_PolyString()
+{
+    std::string res = header + " " + output + " " + optimisation_baseline + " ";
+
+    for (auto const &s : optimisations)
+        res += (s + " ");
+
+    return res;
+}
+
+
+std::string PolyString::get_no_plugin_no_optimisations_PolyString()
+{
+    return header + " " + output + " -O0";
+};
+
+
+/* UTILS FUNCTION IMPLEMENTATIONS */
+
+
 PolyString* construct_polybench_PolyString(const std::string& program_name, const std::string& baseline)
 {
     PolyString* new_ps = new PolyString
     (
-        construct_header(program_name),
+        program_name,
         DEFAULT_PLUGIN_INFO,
         (get_benchmark_files(program_name) + "-DPOLYBENCH_TIME -o " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name),
         baseline
@@ -131,13 +189,12 @@ double run_given_string(const std::string& compile_string, const std::string& pr
     std::system("mkdir -p data/tmp");
 
     // compiling the program
-    std::cout << "run_given_string() compile string: " << compile_string << '\n';
+    std::cout << "run_given_string() compile string: " << compile_string << "\n\n" << std::flush;
     std::system(compile_string.c_str());
 
 
     // running the program
     std::string exec_string((std::string)"./" + DEFAULT_EXEC_OUTPUT_LOCATION + program_name + (std::string)" > " + DEFAULT_DATA_OUTPUT_LOCATION);
-    std::cout << "Running program string: " << exec_string << '\n';
     std::system(exec_string.c_str());
 
     // extracting the program execution time and cleaning up
@@ -271,4 +328,26 @@ std::string strip_unop(const std::string& unop)
     res = unop.substr(0, unop.find("-O0"));
 
     return res;
+}
+
+
+std::vector<std::string> load_action_space(const std::string& filename)
+{
+    std::vector<std::string> res_as;
+
+    std::ifstream as_file(filename);
+
+    if(as_file.is_open())
+    {
+        std::string line;
+        while(getline(as_file, line))
+            res_as.push_back(line);
+    }
+    else
+    {
+        std::cerr << "Filename / path not recognised, could not read action space.\n";
+        return {"-1"};
+    }
+
+    return res_as;
 }

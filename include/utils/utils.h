@@ -46,46 +46,36 @@ struct PolyString
     /* output string contains output information for gcc */
     std::string output;
 
+    /* baseline optimisation level */
+    std::string optimisation_baseline;
+
     /* contains information about the optimisations being applied */
-    // std::string optimisations;
     std::vector<std::string> optimisations;
 
+    /* stored for easy use in performance timing functions */
+    std::string program_name; 
 
-    PolyString(const std::string& header, const std::string& plugin_info, const std::string& output, const std::string& baseline)
-    : header(header), plugin_info(plugin_info), output(output)
-    { optimisations.push_back(baseline); };
+    PolyString(const std::string& program_name, const std::string& plugin_info, const std::string& output, const std::string& baseline);
 
-    void reset_PolyString_optimisations() { optimisations.clear(); };
+    void reset_PolyString_optimisations();
+
+    /**
+     * @brief reset the PolyString environment with a new program name - clear optimisations and update header and ouptut information
+     * 
+     * @param new_program_name 
+     */
+    void reset_PolyString_environment(const std::string& new_program_name);
 
     /**
      * @brief Get the full PolyString as one string seperated by spaces in order: header - plugin_info - output - optimisations
      * 
      * @return std::string 
      */
-    inline std::string get_full_PolyString()
-    {
-        std::string res = header + " " + plugin_info + " " + output + " ";
+    std::string get_full_PolyString();
 
-        for(auto const& s : optimisations)
-            res += (s + " ");
+    std::string get_no_plugin_PolyString();
 
-        return res;
-    };
-
-    inline std::string get_no_plugin_PolyString()
-    {
-        std::string res = header + " " + output + " ";
-
-        for(auto const& s : optimisations)
-            res += (s + " ");
-
-        return res;
-    }
-
-    inline std::string get_no_plugin_no_optimisations_PolyString()
-    {
-        return header + " " + output + " -O0";
-    };
+    std::string get_no_plugin_no_optimisations_PolyString();
 };
 
 PolyString* construct_polybench_PolyString(const std::string& program_name, const std::string& baseline);
@@ -113,5 +103,13 @@ std::string get_benchmark_files(const std::string& program_name);
 std::string construct_header(const std::string& program_name);
 
 std::string strip_unop(const std::string& unop);
+
+/**
+ * @brief load an action space from given line seperated action-space .txt file
+ * 
+ * @param filename 
+ * @return std::vector<std::string> 
+ */
+std::vector<std::string> load_action_space(const std::string& filename);
 
 #endif
