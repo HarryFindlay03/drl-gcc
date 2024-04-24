@@ -19,13 +19,14 @@ std::vector<std::string> benchmarks = read_file_to_vec(DEFAULT_BENCHMARKS_LIST_L
 std::vector<std::string> optimisations = read_file_to_vec(DEFAULT_OPTIMISATIONS_LIST_LOCATION);
 
 
-PolyString* construct_polybench_PolyString(const std::string& program_name)
+PolyString* construct_polybench_PolyString(const std::string& program_name, const std::string& baseline)
 {
     PolyString* new_ps = new PolyString
     (
         construct_header(program_name),
         DEFAULT_PLUGIN_INFO,
-        (get_benchmark_files(program_name) + "-DPOLYBENCH_TIME -o " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name)
+        (get_benchmark_files(program_name) + "-DPOLYBENCH_TIME -o " + DEFAULT_EXEC_OUTPUT_LOCATION + program_name),
+        baseline
     );
 
     return new_ps;

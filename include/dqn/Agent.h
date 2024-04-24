@@ -1,8 +1,8 @@
 /***
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
- * FILE START: 25/04/2024
- * FILE LAST UPDATED: 11/05/2024
+ * FILE START: 25/03/2024
+ * FILE LAST UPDATED: 24/04/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -18,6 +18,7 @@
 #include <cmath>
 #include <random>
 #include <map>
+#include <fstream>
 
 #include "mlp-cpp/network.h"
 #include "mlp-cpp/funcs.h"
@@ -28,6 +29,11 @@
 #include "BufferItem.h"
 
 #define NOP (std::string)""
+
+#define GRADIENT_MONITOR_FILENAME "data/training/train_gradient.txt"
+#define DEFAULT_WEIGHT_SAVE_LOCATION "data/training/weights_saved.txt"
+
+#define DEFAULT_SAVE_PERIOD 100
 
 
 /* HELPER FUNCTIONS */
@@ -50,6 +56,8 @@ std::vector<std::string> init_action_space(const std::vector<std::string>& as);
 
 class Agent
 {
+private:
+
     /* NETWORKS */
     MLP* Q;
     MLP* Q_hat;
@@ -82,6 +90,10 @@ class Agent
     /* RANDOM HELPER */
     rand_helper* rnd;
 
+    /* GRADIENT MONITORING */
+    bool gradient_monitoring;
+    std::ofstream grad_monitor_file;
+
 
 public:
     Agent
@@ -95,7 +107,8 @@ public:
         const unsigned int episode_length,
         const double discount_rate,
         const double learning_rate,
-        rand_helper* rnd
+        rand_helper* rnd,
+        bool gradient_monitoring=false
     );
 
     ~Agent()
@@ -107,6 +120,10 @@ public:
         delete Q;
         delete Q_hat;
         delete rnd;
+
+        if(gradient_monitoring)
+            if(grad_monitor_file.is_open())
+                grad_monitor_file.close();
     };
 
     /* TRAINING FUNCTIONS */

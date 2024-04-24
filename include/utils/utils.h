@@ -51,8 +51,9 @@ struct PolyString
     std::vector<std::string> optimisations;
 
 
-    PolyString(const std::string& header, const std::string& plugin_info, const std::string& output)
-    : header(header), plugin_info(plugin_info), output(output) {};
+    PolyString(const std::string& header, const std::string& plugin_info, const std::string& output, const std::string& baseline)
+    : header(header), plugin_info(plugin_info), output(output)
+    { optimisations.push_back(baseline); };
 
     void reset_PolyString_optimisations() { optimisations.clear(); };
 
@@ -87,7 +88,7 @@ struct PolyString
     };
 };
 
-PolyString* construct_polybench_PolyString(const std::string& program_name);
+PolyString* construct_polybench_PolyString(const std::string& program_name, const std::string& baseline);
 
 std::vector<std::string> read_file_to_vec(const std::string& filename);
 

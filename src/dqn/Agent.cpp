@@ -1,8 +1,8 @@
 /***
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
- * FILE START: 25/04/2024
- * FILE LAST UPDATED: 09/05/2024
+ * FILE START: 25/03/2024
+ * FILE LAST UPDATED: 24/04/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -12,6 +12,10 @@
 
 
 #include "dqn/Agent.h"
+
+// todo
+// loading action-spaces and training program sets
+// determining good optimisation sets with trained policy
 
 
 /* AGENT CLASS*/
@@ -28,7 +32,8 @@ Agent::Agent
     const unsigned int episode_length,
     const double discount_rate,
     const double learning_rate,
-    rand_helper* rnd
+    rand_helper* rnd,
+    bool gradient_monitoring
 )
 :
     actions(actions), /* setting agent's action space */
@@ -39,7 +44,8 @@ Agent::Agent
     episode_length(episode_length),
     discount_rate(discount_rate),
     learning_rate(learning_rate),
-    rnd(rnd)
+    rnd(rnd),
+    gradient_monitoring(gradient_monitoring)
 {
     // todo normalisation of feature vector
     // creating activation func pair and initialisor
@@ -52,7 +58,8 @@ Agent::Agent
     Q_hat = new MLP(network_config, activ_funcs, initialiasor, loss_func, rnd, learning_rate);
 
     // construct agent's PolyString (environnment)
-    curr_env = construct_polybench_PolyString(program_name);
+    std::string optimisation_baseline = "-01"; // changeable parameter based on action-space chosen
+    curr_env = construct_polybench_PolyString(program_name, optimisation_baseline);
 
     // initially set network weights equal
     copy_network_weights();
@@ -63,6 +70,18 @@ Agent::Agent
 
     // get no optimisations applied runtime
     init_runtime = run_given_string(curr_env->get_no_plugin_no_optimisations_PolyString(), program_name);
+
+    // open gradient file in order for agent to write gradient to file
+    if(gradient_monitoring)
+    {
+        grad_monitor_file.open(GRADIENT_MONITOR_FILENAME);
+
+        if(!grad_monitor_file.is_open())
+        {
+            std::cerr << "Gradient monitoring file open unsuccesful!\n";
+            std::cerr << "Monitoring will not take place.\n";
+        }
+    }
 
     return;
 }
@@ -89,8 +108,14 @@ void Agent::train_optimiser(const double epsilon)
             train_phase();
 
             /* copy network weights */
-            if((curr_itr++) % copy_period)
+            if(!(curr_itr % copy_period))
                 copy_network_weights();
+
+            /* save network weights to file */
+            if(!(curr_itr % ((int)DEFAULT_SAVE_PERIOD)))
+                save_weights(Q, (std::string)DEFAULT_WEIGHT_SAVE_LOCATION);
+
+            curr_itr++;
         }
     }
 }
@@ -120,13 +145,13 @@ void Agent::sampling(const double epsilon, bool terminate)
 
     next_st = get_program_state(curr_env, get_num_features());
 
-    std::cout << "Curr state: ";
-    for(auto const& v : curr_st)
-        std::cout << v << " ";
-    std::cout << "\t Next state: ";
-    for(auto const& v : next_st)
-        std::cout << v << " ";
-    std::cout << "\n\n";
+    // std::cout << "Curr state: ";
+    // for(auto const& v : vec_min_max_scaling(curr_st))
+    //     std::cout << v << " ";
+    // std::cout << "\t Next state: ";
+    // for(auto const& v : next_st)
+    //     std::cout << v << " ";
+    // std::cout << "\n\n";
 
     // intermediate reward is zero if not episode termination else reward is proportional to the new program runtime compared
     // against the intitial runtime
@@ -168,6 +193,12 @@ void Agent::train_phase()
     // setting yj
     Eigen::MatrixXd out_yj = Eigen::MatrixXd::Zero(out_Q.rows(), out_Q.cols());
     out_yj(0, b->get_action_pos()) = y_j;
+
+    if(gradient_monitoring)
+    {
+        grad_monitor_file << std::to_string((Q->loss_function(out_Q, out_yj, b->get_action_pos()))(0, b->get_action_pos())) << '\n';
+        grad_monitor_file.flush();
+    }
 
     // gradient descent step
     Q->back_propogate_rl(out_yj, b->get_action_pos());
