@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 14/03/2024
- * FILE LAST UPDATED: 18/04/2024
+ * FILE LAST UPDATED: 25/04/2024
  * 
  * REQUIREMENTS: PolyBench
  * REFERENCES:
@@ -189,7 +189,6 @@ double run_given_string(const std::string& compile_string, const std::string& pr
     std::system("mkdir -p data/tmp");
 
     // compiling the program
-    std::cout << "run_given_string() compile string: " << compile_string << "\n\n" << std::flush;
     std::system(compile_string.c_str());
 
 
@@ -268,6 +267,12 @@ std::vector<double> read_state_vector(const std::string& filename, int num_featu
 }
 
 
+double relative_change_reward(const double new_runtime, const double initial_runtime)
+{
+    return -1 * (100 * ((new_runtime - initial_runtime) / (std::fabs(initial_runtime))));
+}
+
+
 std::string opt_vec_to_string(const std::vector<std::string>& opts)
 {
     std::string res;
@@ -318,14 +323,4 @@ std::string get_benchmark_files(const std::string& program_name)
 {
     int pos = get_benchmark_location(program_name);
     return ("polybench-c-3.2/utilities/polybench.c " + benchmarks[pos] + " "); 
-}
-
-
-std::string strip_unop(const std::string& unop)
-{
-    std::string res;
-
-    res = unop.substr(0, unop.find("-O0"));
-
-    return res;
 }

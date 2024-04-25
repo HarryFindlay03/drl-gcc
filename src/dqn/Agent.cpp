@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 25/03/2024
- * FILE LAST UPDATED: 24/04/2024
+ * FILE LAST UPDATED: 25/04/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -13,8 +13,6 @@
 
 #include "dqn/Agent.h"
 
-// todo
-// update the reward function to be positive and negative
 
 /* AGENT CLASS*/
 
@@ -45,11 +43,10 @@ Agent::Agent
     rnd(rnd),
     gradient_monitoring(gradient_monitoring)
 {
-    // todo normalisation of feature vector
     // creating activation func pair and initialisor
     std::pair<mlp_activation_func_t, mlp_activation_func_t> activ_funcs = std::make_pair(mlp_ReLU, mlp_linear);
     weight_init_func_t initialiasor = he_normal_initialiser;
-    mlp_loss_func_t loss_func = dql_square_loss;
+    mlp_loss_func_t loss_func = dql_square_loss_with_error_clipping;
 
     // instatiate both networks
     Q = new MLP(network_config, activ_funcs, initialiasor, loss_func, rnd, learning_rate);
@@ -96,6 +93,8 @@ void Agent::train_optimiser(const double epsilon)
 
     for(i = 0; i < number_of_episodes; i++)
     {
+        std::cout << "Episode: " << i << "\t Program: " << curr_env->program_name << "\t Training Progress: (" << ((i+1) / (double)number_of_episodes) * 100 << "%)\n" << std::flush;
+
         for(j = 0; j < episode_length; j++)
         {
             /* sampling */
@@ -118,6 +117,12 @@ void Agent::train_optimiser(const double epsilon)
 
         /* on episode completion */
 
+        // output optimisations
+        std::cout << "Optimisations applied in episode: ";
+        for(auto const& opt : curr_env->optimisations)
+            std::cout << opt << " ";
+        std::cout << "\n\n" << std::flush;
+
         // reset the environment with a uniformally chosen new program, regenerate the initial runtime for the new chosen program, and reset applied optimisations
         int program_pos = rnd->random_int_range(0, program_names.size()-1);
 
@@ -138,7 +143,7 @@ void Agent::sampling(const double epsilon, bool terminate)
     std::vector<double> curr_st;
     std::vector<double> next_st;
 
-    curr_st = get_program_state(curr_env, get_num_features());
+    curr_st = vec_min_max_scaling(get_program_state(curr_env, get_num_features()));
 
     int action_pos = epsilon_greedy_action(curr_st, epsilon);
 
@@ -154,21 +159,17 @@ void Agent::sampling(const double epsilon, bool terminate)
         applied_optimisations[action_pos] = 1;
     }
 
-
-    next_st = get_program_state(curr_env, get_num_features());
-
-    std::cout << "Curr state: ";
-    for(auto const& v : curr_st)
-        std::cout << v << " ";
-    std::cout << "\t Next state: ";
-    for(auto const& v : next_st)
-        std::cout << v << " ";
-    std::cout << "\n\n";
+    // get the next state after executing (applying) optimisation
+    next_st = vec_min_max_scaling(get_program_state(curr_env, get_num_features()));
 
     // intermediate reward is zero if not episode termination else reward is proportional to the new program runtime compared
     // against the intitial runtime
     if(terminate)
-        reward = get_reward(run_given_string(curr_env->get_no_plugin_PolyString(), curr_env->program_name));
+    {
+        double updt_runtime = run_given_string(curr_env->get_no_plugin_PolyString(), curr_env->program_name);
+        reward = get_reward(updt_runtime);
+        std::cout << "Initial Runtime:" << init_runtime << "\t New Runtime: " << updt_runtime << "\t Episode reward: " << reward << '\n';
+    }
 
     // save to replay buffer
     buff[(curr_buff_pos++) % buffer_size] = new BufferItem(curr_st, action_pos, reward, next_st, terminate);
@@ -255,11 +256,7 @@ void Agent::copy_network_weights()
 
 double Agent::get_reward(const double new_runtime)
 {
-    // return percentage difference of initial runtime vs new runtime
-    if(new_runtime <= init_runtime)
-        return 0;
-
-    return (abs(init_runtime - new_runtime) /  ((init_runtime + new_runtime) / 2));
+    return DEFAULT_REWARD_FUNCTION(new_runtime, init_runtime);
 }
 
 

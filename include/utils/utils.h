@@ -30,6 +30,7 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
+#include <cmath>
 
 
 /**
@@ -78,31 +79,123 @@ struct PolyString
     std::string get_no_plugin_no_optimisations_PolyString();
 };
 
+
+/* POLYBENCH HELPER FUNCTIONS */
+
+
+/**
+ * @brief Return a pointer to a newly constructed PolyBench environment struct given a program name and a baseline optimisation level
+ * 
+ * @param program_name 
+ * @param baseline 
+ * @return PolyString* 
+ */
 PolyString* construct_polybench_PolyString(const std::string& program_name, const std::string& baseline);
 
-std::vector<std::string> read_file_to_vec(const std::string& filename);
-
-std::string get_program_name(const std::string& benchmark);
-
-std::string format_benchmark_string(const std::string& benchmark_to_fmt);
-
-int get_benchmark_location(const std::string& program_name);
-
-double run_given_string(const std::string& compile_string, const std::string& program_name);
-
-std::vector<double> get_program_state(PolyString* ps, int num_features);
-
-std::vector<double> read_state_vector(const std::string& filename, int num_features);
-
-std::string opt_vec_to_string(const std::vector<std::string>& opts);
-
-bool check_unop_compile(const std::string& unop, const std::string& program_name);
-
+/**
+ * @brief Returns a string constructed with required polybench information for a correct compile string, function used within construct_polybench_PolyString.
+ * 
+ * @param program_name 
+ * @return std::string 
+ */
 std::string get_benchmark_files(const std::string& program_name);
 
+/**
+ * @brief Returns a string with necessary header information for a polybench compile string, used within construct_polybench_PolyString.
+ * 
+ * @param program_name 
+ * @return std::string 
+ */
 std::string construct_header(const std::string& program_name);
 
-std::string strip_unop(const std::string& unop);
+
+/* FORMATTING HELPER FUNCTIONS */
+
+
+/**
+ * @brief Helper function to read a line seperated list of information into a string vector container.
+ * 
+ * @param filename 
+ * @return std::vector<std::string> 
+ */
+std::vector<std::string> read_file_to_vec(const std::string& filename);
+
+/**
+ * @brief Helper function to parse the program name from a polybench benchmark location string.
+ * 
+ * @param benchmark 
+ * @return std::string 
+ */
+std::string get_program_name(const std::string& benchmark);
+
+/**
+ * @brief Returns a formated compile string with respect to polybench header and include rules, see polybench readme.
+ * 
+ * @param benchmark_to_fmt 
+ * @return std::string 
+ */
+std::string format_benchmark_string(const std::string& benchmark_to_fmt);
+
+/**
+ * @brief Returns a string joined by whitespaces of an optimisations vector often used in the PolyString struct.
+ * 
+ * @param opts 
+ * @return std::string 
+ */
+std::string opt_vec_to_string(const std::vector<std::string>& opts);
+
+/**
+ * @brief Helper function used within format_benchmark_string to help construct the compile string.
+ * 
+ * @param program_name 
+ * @return int 
+ */
+int get_benchmark_location(const std::string& program_name);
+
+
+/* ANALYSIS FUNCTIONS */
+
+/**
+ * @brief Runs a given (polybench) compile string and returns the number of seconds that the string takes to run.
+ * 
+ * @param compile_string 
+ * @param program_name 
+ * @return double 
+ */
+double run_given_string(const std::string& compile_string, const std::string& program_name);
+
+/**
+ * @brief Returns a state vector of the current environment by utilising the statetool plugin.
+ * 
+ * @param ps 
+ * @param num_features 
+ * @return std::vector<double> 
+ */
+std::vector<double> get_program_state(PolyString* ps, int num_features);
+
+/**
+ * @brief Helper function used within get_program_state to read outputted program state from given filename passed as a plugin argument to statetool.
+ * 
+ * @param filename 
+ * @param num_features 
+ * @return std::vector<double> 
+ */
+std::vector<double> read_state_vector(const std::string& filename, int num_features);
+
+/**
+ * @brief Computes the relative change of the initial runtime and the new runtime as we want the sign to be taken account of.
+ * 
+ * @param new_runtime 
+ * @param initial_runtime 
+ * @return double 
+ */
+double relative_change_reward(const double new_runtime, const double initial_runtime);
+
+
+/* TEST FUNCTIONS */
+
+
+bool check_unop_compile(const std::string& unop, const std::string& program_name);
 
 
 #endif

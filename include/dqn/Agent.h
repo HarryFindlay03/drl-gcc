@@ -2,7 +2,7 @@
  * AUTHOR: Harry Findlay
  * LICENSE: Shipped with package - GNU GPL v3.0
  * FILE START: 25/03/2024
- * FILE LAST UPDATED: 24/04/2024
+ * FILE LAST UPDATED: 25/04/2024
  * 
  * REQUIREMENTS: Eigen v3.4.0, src: https://eigen.tuxfamily.org/index.php?title=Main_Page
  * REFERENCES: Volodymyr Mnih et al. "Human-level control through deep reinforcement learning."
@@ -34,6 +34,9 @@
 #define DEFAULT_WEIGHT_SAVE_LOCATION "data/training/weights_saved.txt"
 
 #define DEFAULT_SAVE_PERIOD 100
+
+// Change here to update default reward function used within Agent.
+#define DEFAULT_REWARD_FUNCTION relative_change_reward
 
 
 /* HELPER FUNCTIONS */
@@ -158,6 +161,12 @@ public:
 
     inline const std::vector<std::string>& get_actions() { return actions; };
 
+    /**
+     * @brief get the reward of the agent given new runtime
+     * 
+     * @param new_runtime 
+     * @return double 
+     */
     double get_reward(const double new_runtime);
 
     inline double get_init_runtime() { return init_runtime; };
