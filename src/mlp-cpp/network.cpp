@@ -153,7 +153,7 @@ void MLP::back_propogate(const Eigen::MatrixXd& target)
     /* back propogating through remaining excluding input */
     int i;
     for(i = (num_layers-2); i > 0; i--)
-        layers[i]->G = layers[i]->Fp.array().eval() * (layers[i+1]->G * layers[i]->W.transpose().eval()).array().eval();
+        layers[i]->G = (layers[i]->Fp.array().eval() * ((layers[i+1]->G * layers[i]->W.transpose().eval()).array().eval())).matrix();
 }
 
 

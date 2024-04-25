@@ -16,14 +16,11 @@ utils.o:
 statetool:
 	./plug.sh
 
-driver: network.o Agent.o utils.o
-	$(CC) $(CC_FLAGS) src/examples/driver.cpp  build/network.o build/Agent.o build/utils.o -o bin/$@
-
 driver_agent: network.o funcs.o Agent.o utils.o
 	$(CC) $(CC_FLAGS) src/examples/driver_agent.cpp build/network.o build/funcs.o build/Agent.o build/utils.o -o bin/$@
 
-driver_mlp: network.o funcs.o
-	$(CC) $(CC_FLAGS) src/examples/driver_mlp.cpp build/network.o build/funcs.o -o bin/$@
+example_mlp: network.o funcs.o
+	$(CC) $(CC_FLAGS) src/examples/example_mlp.cpp build/network.o build/funcs.o -o bin/$@
 
 example_agent: network.o funcs.o Agent.o utils.o
 	$(CC) $(CC_FLAGS) src/examples/driver_agent.cpp build/network.o build/funcs.o build/Agent.o build/utils.o -o bin/$@
