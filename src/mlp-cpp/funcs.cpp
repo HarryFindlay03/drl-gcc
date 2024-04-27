@@ -138,14 +138,17 @@ Eigen::MatrixXd dql_square_loss_with_error_clipping(const Eigen::MatrixXd& outpu
     Eigen::MatrixXd new_target = Eigen::MatrixXd::Zero(target.rows(), target.cols());
     new_target(0, action_pos) = target(0, action_pos);
 
-    // error clipping
-    Eigen::MatrixXd new_output(output);
-    if(output(0, action_pos) > 1)
-        new_output(0, action_pos) = 1;
-    if(output(0, action_pos) < -1)
-        new_output(0, action_pos) = -1;
+    Eigen::MatrixXd res = (output - new_target);
 
-    return (new_output - new_target).array().square().matrix();
+    // error clipping in interval [-1, 1].
+    if(res(0, action_pos) > 1)
+        res(0, action_pos) = 1;
+    else if(res(0, action_pos) < -1)
+        res(0, action_pos) = -1;
+    else if(std::isnan(res(0, action_pos)))
+        res(0, action_pos) = 1;
+
+    return res.array().square().matrix().eval();
 }
 
 

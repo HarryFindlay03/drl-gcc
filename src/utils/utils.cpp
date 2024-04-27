@@ -269,7 +269,7 @@ std::vector<double> read_state_vector(const std::string& filename, int num_featu
 
 double relative_change_reward(const double new_runtime, const double initial_runtime)
 {
-    return -1 * (100 * ((new_runtime - initial_runtime) / (std::fabs(initial_runtime))));
+    return -1 * (((new_runtime - initial_runtime) / (std::fabs(initial_runtime))));
 }
 
 

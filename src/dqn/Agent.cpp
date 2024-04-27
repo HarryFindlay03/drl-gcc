@@ -44,9 +44,9 @@ Agent::Agent
     gradient_monitoring(gradient_monitoring)
 {
     // creating activation func pair and initialisor
-    std::pair<mlp_activation_func_t, mlp_activation_func_t> activ_funcs = std::make_pair(mlp_ReLU, mlp_linear);
-    weight_init_func_t initialiasor = he_normal_initialiser;
-    mlp_loss_func_t loss_func = dql_square_loss_with_error_clipping;
+    std::pair<mlp_activation_func_t, mlp_activation_func_t> activ_funcs = std::make_pair(DEFAULT_HIDDEN_ACTIVATION, DEFAULT_OUTPUT_ACTIVATION);
+    weight_init_func_t initialiasor = DEFAULT_INITIALISOR;
+    mlp_loss_func_t loss_func = DEFAULT_LOSS_FUNCTION;
 
     // instatiate both networks
     Q = new MLP(network_config, activ_funcs, initialiasor, loss_func, rnd, learning_rate);
@@ -93,7 +93,7 @@ void Agent::train_optimiser(const double epsilon)
 
     for(i = 0; i < number_of_episodes; i++)
     {
-        std::cout << "Episode: " << i << "\t Program: " << curr_env->program_name << "\t Training Progress: (" << ((i+1) / (double)number_of_episodes) * 100 << "%)\n" << std::flush;
+        std::cout << "Episode: " << i << "\t Program: " << curr_env->program_name << "\t Training Progress: " << ((i+1) / (double)number_of_episodes) * 100 << "%\n" << std::flush;
 
         for(j = 0; j < episode_length; j++)
         {
@@ -134,6 +134,12 @@ void Agent::train_optimiser(const double epsilon)
         for(auto it = applied_optimisations.begin(); it != applied_optimisations.end(); ++it)
             *it = 0;
     }
+
+    /* on completion save weights */
+    save_weights(Q, (std::string)DEFAULT_WEIGHT_SAVE_LOCATION);
+    std::cout << "Training complete, weights saved to location: " << DEFAULT_WEIGHT_SAVE_LOCATION << '\n' << std::flush;
+
+    return;
 }
 
 
@@ -209,7 +215,7 @@ void Agent::train_phase()
 
     if(gradient_monitoring)
     {
-        grad_monitor_file << std::to_string((Q->loss_function(out_Q, out_yj, b->get_action_pos()))(0, b->get_action_pos())) << '\n';
+        grad_monitor_file << std::to_string((Q->loss_function(out_yj, out_Q, b->get_action_pos()))(0, b->get_action_pos())) << '\n';
         grad_monitor_file.flush();
     }
 

@@ -35,8 +35,14 @@
 
 #define DEFAULT_SAVE_PERIOD 100
 
-// Change here to update default reward function used within Agent.
+/* Change here to update default weight initialisation, loss , and reward functions used within Agent. */
+#define DEFAULT_INITIALISOR he_normal_initialiser
+#define DEFAULT_LOSS_FUNCTION dql_square_loss_with_error_clipping
 #define DEFAULT_REWARD_FUNCTION relative_change_reward
+
+/* Change here to update default activation functions used within Agent */
+#define DEFAULT_HIDDEN_ACTIVATION mlp_ReLU
+#define DEFAULT_OUTPUT_ACTIVATION mlp_linear
 
 
 /* HELPER FUNCTIONS */
