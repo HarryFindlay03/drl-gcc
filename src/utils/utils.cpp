@@ -278,7 +278,7 @@ std::string opt_vec_to_string(const std::vector<std::string>& opts)
     std::string res;
 
     for(const auto & opt : opts)
-        res += opt;
+        res += (" " + opt);
 
     return res;
 }

@@ -76,6 +76,13 @@ public:
         std::normal_distribution<double> distr(mean, sd);
         return distr(gn);
     }
+
+    template<typename T>
+    void rnd_shuffle(std::vector<T>& vec)
+    {
+        std::shuffle(std::begin(vec), std::end(vec), gn);
+        return;
+    }
 };
 
 #endif /* RAND_HELPER_H */

@@ -13,6 +13,9 @@ Agent.o:
 utils.o:
 	$(CC) $(CC_FLAGS) -c src/utils/utils.cpp -o build/$@
 
+non-ml.o:
+	$(CC) $(CC_FLAGS) -c src/non-ml/non-ml.cpp -o build/$@
+
 statetool:
 	./plug.sh
 
