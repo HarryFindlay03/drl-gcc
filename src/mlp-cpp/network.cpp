@@ -119,7 +119,7 @@ MLP::MLP
 
 Eigen::MatrixXd MLP::forward_propogate(const std::vector<double>& input)
 {
-    double bias = 0.3; // todo make dynamic
+    double bias = 1.0; // todo make dynamic
 
     // ensure input and first layer are of same dimension
     int n = layers[0]->Z.cols();
