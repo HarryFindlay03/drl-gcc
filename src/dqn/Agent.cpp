@@ -43,6 +43,8 @@ Agent::Agent
     rnd(rnd),
     gradient_monitoring(gradient_monitoring)
 {
+    save_agent_information();
+
     // creating activation func pair and initialisor
     std::pair<mlp_activation_func_t, mlp_activation_func_t> activ_funcs = std::make_pair(DEFAULT_HIDDEN_ACTIVATION, DEFAULT_OUTPUT_ACTIVATION);
     weight_init_func_t initialiasor = DEFAULT_INITIALISOR;
@@ -138,6 +140,8 @@ void Agent::train_optimiser(const double epsilon)
     /* on completion save weights */
     save_weights(Q, (std::string)DEFAULT_WEIGHT_SAVE_LOCATION);
     std::cout << "Training complete, weights saved to location: " << DEFAULT_WEIGHT_SAVE_LOCATION << '\n' << std::flush;
+
+    print_agent_information();
 
     return;
 }
@@ -279,6 +283,50 @@ void Agent::print_networks()
     for(auto l : Q_hat->layers)
         std::cout << l->W << "\n\n";
     std::cout << std::endl;
+
+    return;
+}
+
+
+void Agent::print_agent_information()
+{
+    std::cout << "=================\n" << "PARAMETERS\n" << "=================\n";
+    std::cout << "Learning rate: " << learning_rate << '\n';
+    std::cout << "Number of episodes: " << number_of_episodes << '\n';
+    std::cout << "Episode length: " << episode_length << '\n';
+    std::cout << "Discount rate: " << discount_rate << '\n';
+    std::cout << "Buffer size: " << buffer_size << '\n';
+    std::cout << "\n=================\n" << "TRAINING INFORMATION\n" << "=================\n";
+    std::cout << "Action space: " << opt_vec_to_string(actions) << '\n';
+    std::cout << "\nProgram training space: " << opt_vec_to_string(program_names) << '\n';
+    std::cout << std::endl;
+
+    return;
+}
+
+
+void Agent::save_agent_information()
+{
+    std::ofstream out_file(DEFAULT_AGENT_INFO_LOCATION);
+
+    if(!(out_file.is_open()))
+    {
+        std::cerr << "ERROR IN SAVING AGENT INFORMATION, THIS WILL BE PRINTED STILL AT THE END OF PROGRAM RUN!\n";
+        return;
+    }
+
+    out_file << "=================\n" << "PARAMETERS\n" << "=================\n";
+    out_file << "Learning rate: " << learning_rate << '\n';
+    out_file << "Number of episodes: " << number_of_episodes << '\n';
+    out_file << "Episode length: " << episode_length << '\n';
+    out_file << "Discount rate: " << discount_rate << '\n';
+    out_file << "Buffer size: " << buffer_size << '\n';
+    out_file << "\n=================\n" << "TRAINING INFORMATION\n" << "=================\n";
+    out_file << "Action space: " << opt_vec_to_string(actions) << '\n';
+    out_file << "\nProgram training space: " << opt_vec_to_string(program_names) << '\n';
+    out_file << std::endl;
+
+    out_file.close();
 
     return;
 }

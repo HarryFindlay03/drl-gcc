@@ -32,6 +32,7 @@
 
 #define GRADIENT_MONITOR_FILENAME "data/training/train_gradient.txt"
 #define DEFAULT_WEIGHT_SAVE_LOCATION "data/training/weights_saved.txt"
+#define DEFAULT_AGENT_INFO_LOCATION "data/training/agent_info.txt"
 
 #define DEFAULT_SAVE_PERIOD 100
 
@@ -184,6 +185,10 @@ public:
     /* DEBUG HELPER FUNCTIONS */
 
     void print_networks();
+
+    void print_agent_information();
+
+    void save_agent_information();
 
     /* STATIC TRAINED POLICY FUNCTIONS */
 
