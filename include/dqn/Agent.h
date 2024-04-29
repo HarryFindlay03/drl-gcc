@@ -185,6 +185,12 @@ public:
 
     void print_networks();
 
+    /* STATIC TRAINED POLICY FUNCTIONS */
+
+    static std::vector<std::string> select_actions_via_policy(MLP* Q_net, const std::string& program_name, const std::vector<std::string>& action_space, const std::string& optimisation_baseline, int num_actions);
+
+    static std::vector<std::string> select_actions_via_policy(MLP *Q_net, const std::string &program_name, const std::vector<std::string> &action_space, const std::string &optimisation_baseline);
+
     /* STATIC HELPER FUNCTIONS */
     
     static int best_q_action(const Eigen::MatrixXd& input, int n);

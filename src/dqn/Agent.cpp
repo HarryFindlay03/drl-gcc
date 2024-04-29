@@ -284,6 +284,46 @@ void Agent::print_networks()
 }
 
 
+/* STATIC TRAINED POLICY FUNCTIONS */
+
+
+std::vector<std::string> Agent::select_actions_via_policy(MLP* Q_net, const std::string& program_name, const std::vector<std::string>& action_space, const std::string& optimisation_baseline, int num_actions)
+{
+    std::vector<int> selected(action_space.size());
+    std::vector<double> curr_st;
+
+    // generate agent's environment
+    PolyString* curr_env = construct_polybench_PolyString(program_name, optimisation_baseline);
+
+    int i;
+    for(i = 0; i < num_actions; i++)
+    {
+        // forward prop the curr_env to get q_vals
+        curr_st = vec_min_max_scaling(get_program_state(curr_env, Q_net->layers[0]->W.rows()));
+
+        Eigen::MatrixXd vals = Q_net->forward_propogate(curr_st);
+
+        int best_pos = best_q_action(vals, vals.cols());
+
+        // append to ret vector only if not already selected
+        if(selected[best_pos] != 1)
+        {
+            selected[best_pos] = 1;
+            curr_env->optimisations.push_back(action_space[best_pos]);
+        }
+    }
+
+    std::vector<std::string> ret(curr_env->optimisations);
+    return ret;
+}
+
+
+std::vector<std::string> Agent::select_actions_via_policy(MLP* Q_net, const std::string& program_name, const std::vector<std::string>& action_space, const std::string& optimisation_baseline)
+{
+    return select_actions_via_policy(Q_net, program_name, action_space, optimisation_baseline, action_space.size());
+}
+
+
 /* STATIC HELPER FUNCTIONS */
 
 
