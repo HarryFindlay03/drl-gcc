@@ -42,7 +42,7 @@
 
 /* Change here to update default activation functions used within Agent */
 #define DEFAULT_HIDDEN_ACTIVATION mlp_ReLU
-#define DEFAULT_OUTPUT_ACTIVATION mlp_linear
+#define DEFAULT_OUTPUT_ACTIVATION mlp_ReLU
 
 
 /* HELPER FUNCTIONS */
