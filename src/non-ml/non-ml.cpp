@@ -50,5 +50,6 @@ std::vector<std::string> random_optimiser(const std::string& program_name, const
         std::cout << "\nRuntime: " << curr_runtime << "\n\n";
     }
 
+    std::cout << "BEST RUNTIME: " << best_runtime << "\n";
     return ret;
 }
