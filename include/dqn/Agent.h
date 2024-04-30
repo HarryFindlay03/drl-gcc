@@ -43,7 +43,7 @@
 
 /* Change here to update default activation functions used within Agent */
 #define DEFAULT_HIDDEN_ACTIVATION mlp_ReLU
-#define DEFAULT_OUTPUT_ACTIVATION mlp_ReLU
+#define DEFAULT_OUTPUT_ACTIVATION mlp_linear
 
 
 /* HELPER FUNCTIONS */
@@ -165,6 +165,8 @@ public:
     int epsilon_greedy_action(const std::vector<double>& st, const double epsilon);
 
     void copy_network_weights();
+
+    void load_weights_from_file(const std::string& filename);
 
     inline const std::vector<std::string>& get_actions() { return actions; };
 
