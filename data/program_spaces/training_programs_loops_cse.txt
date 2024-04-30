@@ -1,4 +1,10 @@
 2mm
 3mm
+trmm
+cholesky
 gramschmidt
 ludcmp
+dynprog
+seidel-2d
+fdtd-2d
+fdtd-apml
