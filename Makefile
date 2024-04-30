@@ -19,11 +19,15 @@ non-ml.o:
 statetool:
 	./plug.sh
 
-driver_agent: network.o funcs.o Agent.o utils.o
-	$(CC) $(CC_FLAGS) src/examples/driver_agent.cpp build/network.o build/funcs.o build/Agent.o build/utils.o -o bin/$@
+example_agent_on_policy: network.o funcs.o Agent.o utils.o
+	$(CC) $(CC_FLAGS) src/examples/example_agent_on_policy.cpp build/network.o build/funcs.o build/Agent.o build/utils.o -o bin/$@
+
+example_agent_train: network.o funcs.o Agent.o utils.o
+	$(CC) $(CC_FLAGS) src/examples/example_agent_train.cpp build/network.o build/funcs.o build/Agent.o build/utils.o -o bin/$@
 
 example_mlp: network.o funcs.o
 	$(CC) $(CC_FLAGS) src/examples/example_mlp.cpp build/network.o build/funcs.o -o bin/$@
 
-example_agent: network.o funcs.o Agent.o utils.o
-	$(CC) $(CC_FLAGS) src/examples/driver_agent.cpp build/network.o build/funcs.o build/Agent.o build/utils.o -o bin/$@
+
+example_random: utils.o non-ml.o
+	$(CC) $(CC_FLAGS) src/examples/example_random.cpp build/utils.o build/non-ml.o -o bin/$@
